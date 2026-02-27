@@ -24,4 +24,3 @@ adaptive_lighting:
 
 shell_command:
   push_config: "/bin/sh /config/scripts/push_config.sh"
-# Comment test 1772225318
