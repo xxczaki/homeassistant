@@ -1,0 +1,25 @@
+# Databases & logs
+*.log*
+*.db
+*.db-shm
+*.db-wal
+
+# HA internals
+.storage/
+.cloud/
+.HA_VERSION
+deps/
+tts/
+image/
+backups/
+
+# Secrets
+secrets.yaml
+
+# HACS-managed
+custom_components/
+www/community/
+
+# OS junk
+*.DS_Store
+__pycache__/

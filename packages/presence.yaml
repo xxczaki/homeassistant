@@ -1,0 +1,46 @@
+input_boolean:
+  suppress_living_room_auto_light:
+    name: Suppress living room auto light
+    icon: mdi:light-switch-off
+  suppress_bathroom_auto_light:
+    name: Suppress bathroom auto light
+    icon: mdi:light-switch-off
+  suppress_laundry_room_auto_light:
+    name: Suppress laundry room auto light
+    icon: mdi:light-switch-off
+
+input_number:
+  presence_grace_seconds:
+    name: Minimum light on
+    min: 20
+    max: 60
+    step: 1
+    mode: slider
+    unit_of_measurement: s
+    icon: mdi:clock-time-eight
+  light_on_lux_threshold:
+    name: Light on lux threshold
+    min: 0
+    max: 50
+    step: 1
+    mode: slider
+    unit_of_measurement: lx
+    icon: mdi:sun-wireless
+  room_light_timeout_minutes:
+    name: Room light timeout
+    min: 1
+    max: 30
+    step: 1
+    mode: slider
+    unit_of_measurement: min
+    icon: mdi:timer-outline
+
+input_select:
+  current_room:
+    name: Current room
+    options:
+      - none
+      - living_room
+      - bathroom
+      - laundry_room
+    icon: mdi:room-service
