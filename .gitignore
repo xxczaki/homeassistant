@@ -23,3 +23,9 @@ www/community/
 # OS junk
 *.DS_Store
 __pycache__/
+
+# HA runtime
+*.lock
+
+# Default blueprints
+blueprints/
