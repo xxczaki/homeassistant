@@ -1,0 +1,426 @@
+views:
+  # ── Dashboard ──────────────────────────────────────────────
+  - title: Dashboard
+    icon: mdi:view-dashboard
+    type: sections
+    max_columns: 4
+    sections:
+      # Lights
+      - type: grid
+        cards:
+          - type: heading
+            heading: Lights
+            heading_style: title
+            icon: mdi:lightbulb-multiple
+          - type: picture-elements
+            image: /local/images/floorplan-light.png
+            dark_mode_image: /local/images/floorplan-dark.png
+            elements:
+              - type: state-icon
+                entity: light.bed
+                style:
+                  left: "68%"
+                  top: "40%"
+                tap_action:
+                  action: toggle
+              - type: state-icon
+                entity: light.kitchen
+                style:
+                  left: "43%"
+                  top: "40%"
+                tap_action:
+                  action: toggle
+              - type: state-icon
+                entity: light.hue_ambiance_lamp_1
+                style:
+                  left: "18%"
+                  top: "37%"
+                tap_action:
+                  action: toggle
+              - type: state-icon
+                entity: light.hue_ambiance_lamp_2
+                style:
+                  left: "27%"
+                  top: "67%"
+                tap_action:
+                  action: toggle
+              - type: state-icon
+                entity: light.hue_ambiance_lamp_5
+                style:
+                  left: "7.5%"
+                  top: "68%"
+                tap_action:
+                  action: toggle
+          - type: custom:mushroom-light-card
+            entity: light.living_room
+            show_brightness_control: true
+            fill_container: false
+            icon_type: icon
+            layout: horizontal
+            icon: mdi:sofa
+          - square: false
+            type: grid
+            grid_options:
+              rows: auto
+            cards:
+              - type: custom:mushroom-light-card
+                entity: light.hue_ambiance_lamp_5
+                use_light_color: false
+                show_brightness_control: false
+                fill_container: false
+                icon: mdi:washing-machine
+                layout: vertical
+              - type: custom:mushroom-light-card
+                entity: light.hue_ambiance_lamp_1
+                layout: vertical
+                show_brightness_control: false
+                icon: mdi:coat-rack
+              - type: custom:mushroom-light-card
+                entity: light.hue_ambiance_lamp_2
+                fill_container: false
+                show_brightness_control: false
+                collapsible_controls: false
+                show_color_temp_control: false
+                use_light_color: false
+                layout: vertical
+                icon: mdi:bathtub
+
+      # Vacuum
+      - type: grid
+        cards:
+          - type: heading
+            heading_style: title
+            heading: Vacuum
+            icon: mdi:robot-vacuum
+          - type: custom:vacuum-card
+            entity: vacuum.barnaba
+            stats:
+              default:
+                - attribute: bin_full
+                  value_template: >-
+                    {% if value %}
+                      Full
+                    {% else %}
+                      Empty
+                    {% endif %}
+                  subtitle: Bin Status
+
+      # Automations
+      - type: grid
+        cards:
+          - type: heading
+            heading_style: title
+            heading: Automations
+            icon: mdi:home-clock-outline
+          - type: custom:scheduler-card
+            include:
+              - binary_sensor.barnaba_bin_full
+              - device_tracker
+              - fan
+              - light
+              - sensor.undefined_iphone_battery_state
+              - vacuum
+            exclude:
+              - light.hue_ambiance_lamp_1
+              - light.hue_ambiance_lamp_2
+              - light.hue_ambiance_lamp_3
+              - light.hue_ambiance_lamp_4
+              - light.hue_ambiance_lamp_5
+              - light.living_room
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: automation.vaccum_bin_full_notification
+
+      # Purifiers
+      - type: grid
+        cards:
+          - type: heading
+            heading: Purifiers
+            heading_style: title
+            icon: mdi:air-purifier
+          - type: custom:purifier-card
+            entity: fan.zhimi_mb5_ab82_air_purifier
+            stats:
+              - entity_id: sensor.zhimi_mb5_ab82_filter_life_level
+                unit: "%"
+                subtitle: Filter Remaining
+              - entity_id: sensor.zhimi_mb5_ab82_moto_speed_rpm
+                unit: RPM
+                subtitle: Motor Speed
+              - entity_id: sensor.zhimi_mb5_ab82_filter_left_time
+                unit: days
+                subtitle: Filter Life
+            shortcuts:
+              - name: Sleep
+                icon: mdi:weather-night
+                preset_mode: Sleep
+              - name: "100%"
+                icon: mdi:circle-slice-8
+                percentage: 100
+              - name: Auto
+                icon: mdi:brightness-auto
+                preset_mode: Auto
+            aqi:
+              entity_id: sensor.zhimi_mb5_ab82_pm25_density
+              unit: ug/m3
+          - type: custom:purifier-card
+            entity: fan.xiaomi_cpa4_5552_air_purifier
+            stats:
+              - entity_id: sensor.xiaomi_cpa4_5552_filter_life_level_2
+                unit: "%"
+                subtitle: Filter Remaining
+              - entity_id: sensor.xiaomi_cpa4_5552_filter_left_time
+                unit: days
+                subtitle: Filter Life
+            aqi:
+              entity_id: sensor.xiaomi_cpa4_5552_pm25_density_2
+              unit: ug/m3
+          - type: custom:purifier-card
+            entity: fan.xiaomi_cpa4_5552_air_purifier
+            stats:
+              - entity_id: sensor.xiaomi_cpa4_5552_filter_life_level
+                unit: "%"
+                subtitle: Filter Remaining
+              - entity_id: sensor.xiaomi_cpa4_5552_filter_left_time
+                unit: days
+                subtitle: Filter Life
+            shortcuts:
+              - name: Sleep
+                icon: mdi:weather-night
+                preset_mode: Sleep
+              - name: Auto
+                icon: mdi:brightness-auto
+                preset_mode: Auto
+            aqi:
+              entity_id: sensor.xiaomi_cpa4_5552_pm25_density
+              unit: ug/m3
+
+      # Printer & Car
+      - type: grid
+        cards:
+          - type: heading
+            heading: Printer
+            heading_style: title
+            icon: mdi:printer
+          - type: entities
+            title: Brother HL-L2442DW
+            entities:
+              - entity: sensor.hl_l2442dw_status
+                name: Status
+                icon: ""
+              - entity: sensor.hl_l2442dw_black_toner_remaining
+                name: Toner Remaining
+          - type: heading
+            heading: Car
+            heading_style: title
+            icon: mdi:car
+          - type: picture
+            image_entity: image.skoda_kamiq_main_render_of_vehicle
+            alt_text: Main Render of Vehicle
+          - type: horizontal-stack
+            cards:
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: lock.skoda_kamiq_door_lock
+                    state_not: unavailable
+                card:
+                  type: custom:mushroom-lock-card
+                  entity: lock.skoda_kamiq_door_lock
+                  name: Vehicle Status
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: lock.skoda_kamiq_door_lock
+                    state: unavailable
+                card:
+                  type: custom:mushroom-entity-card
+                  entity: binary_sensor.skoda_kamiq_doors_locked
+                  name: Vehicle Status
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-entity-card
+                    entity: sensor.skoda_kamiq_last_updated
+                    name: Last Update
+                  - type: custom:mushroom-entity-card
+                    entity: sensor.skoda_kamiq_range
+                    name: Range
+                  - type: custom:mushroom-entity-card
+                    entity: sensor.skoda_kamiq_fuel_level
+                    name: Fuel
+
+  # ── Network ────────────────────────────────────────────────
+  - title: Network
+    icon: mdi:wifi
+    type: sections
+    sections:
+      # Pi-hole
+      - type: grid
+        cards:
+          - type: heading
+            heading: Pi-hole
+            heading_style: title
+            icon: mdi:pi-hole
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: custom:mini-graph-card
+                    name: Total Queries
+                    icon: mdi:earth
+                    animate: true
+                    entities:
+                      - entity: sensor.pi_hole_dns_queries_today
+                        color: "#06b6d4"
+                        unit: "\u200E"
+                  - type: custom:mini-graph-card
+                    name: Queries Blocked
+                    icon: mdi:hand-back-right
+                    animate: true
+                    entities:
+                      - entity: sensor.pi_hole_ads_blocked_today
+                        color: "#ef4444"
+                        unit: "\u200E"
+                  - type: custom:mini-graph-card
+                    name: Percentage Blocked
+                    icon: mdi:chart-arc
+                    animate: true
+                    entities:
+                      - entity: sensor.pi_hole_ads_percentage_blocked_today
+                        color: "#f97316"
+                  - type: custom:mini-graph-card
+                    name: Domains on Adlists
+                    icon: mdi:list-box
+                    animate: true
+                    entities:
+                      - entity: sensor.pi_hole_domains_blocked
+                        color: "#22c55e"
+                        unit: "\u200E"
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-entity-card
+                    entity: switch.pi_hole
+                    name: Blocking
+                  - type: custom:mushroom-update-card
+                    entity: update.pi_hole_core_update_available
+                    name: Core
+                  - type: custom:mushroom-update-card
+                    entity: update.pi_hole_ftl_update_available
+                    name: FTL
+                  - type: custom:mushroom-update-card
+                    entity: update.pi_hole_web_update_available
+                    name: Web Interface
+
+      # Network
+      - type: grid
+        cards:
+          - type: heading
+            heading: Network
+            heading_style: title
+            icon: mdi:router-wireless
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: custom:mini-graph-card
+                    name: Parsify
+                    icon: mdi:wifi
+                    animate: true
+                    entities:
+                      - entity: sensor.parsify
+                        color: "#06b6d4"
+                  - type: custom:mini-graph-card
+                    name: Parsify IoT
+                    icon: mdi:wifi
+                    animate: true
+                    entities:
+                      - entity: sensor.parsify_iot
+                        color: "#06b6d4"
+                  - type: custom:mini-graph-card
+                    name: Parsify Guest
+                    icon: mdi:wifi
+                    animate: true
+                    entities:
+                      - entity: sensor.parsify_guest_2
+                        color: "#06b6d4"
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    entity: sensor.ucg_ultra_uptime
+                    icon: mdi:timelapse
+                    primary: Uptime
+                    secondary: "{{ relative_time(states(entity) | as_datetime) }}"
+                  - type: custom:mushroom-update-card
+                    entity: update.ucg_ultra
+                  - type: custom:mushroom-update-card
+                    entity: update.usw_lite_8_poe
+                  - type: custom:mushroom-update-card
+                    entity: update.u7_pro
+
+  # ── System ─────────────────────────────────────────────────
+  - title: System
+    icon: mdi:memory
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: System
+            heading_style: title
+            icon: mdi:memory
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: custom:mini-graph-card
+                    name: CPU
+                    hours_to_show: 6
+                    animate: true
+                    entities:
+                      - entity: sensor.system_monitor_processor_use
+                    color_thresholds:
+                      - value: 0
+                        color: "#22c55e"
+                      - value: 50
+                        color: "#eab308"
+                      - value: 80
+                        color: "#ef4444"
+                  - type: custom:mini-graph-card
+                    name: Memory
+                    hours_to_show: 6
+                    icon: mdi:memory
+                    animate: true
+                    entities:
+                      - entity: sensor.system_monitor_memory_use
+                    color_thresholds:
+                      - value: 0
+                        color: "#22c55e"
+                      - value: 2000
+                        color: "#eab308"
+                      - value: 3200
+                        color: "#ef4444"
+                  - type: custom:mini-graph-card
+                    name: Disk
+                    icon: mdi:harddisk
+                    animate: true
+                    entities:
+                      - entity: sensor.system_monitor_disk_use
+                        color: "#06b6d4"
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-update-card
+                    entity: update.home_assistant_supervisor_update
+                    name: Supervisor
+                    show_buttons_control: false
+                  - type: custom:mushroom-update-card
+                    entity: update.home_assistant_core_update
+                    name: Core
+                    show_buttons_control: false
+                  - type: custom:mushroom-update-card
+                    entity: update.home_assistant_operating_system_update
+                    show_buttons_control: false
+                    name: Operating System
+                  - type: custom:mushroom-update-card
+                    entity: update.hacs_update
+                    name: HACS
