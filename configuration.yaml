@@ -21,6 +21,48 @@ recorder:
   commit_interval: 30
 
 adaptive_lighting:
+  - name: "Home"
+    lights:
+      - light.living_room
+      - light.bathroom
+      - light.laundry_room
+      - light.hallway
+    min_brightness: 75
+    max_brightness: 100
+    min_color_temp: 2000
+    max_color_temp: 5500
+    sleep_brightness: 30
+    sleep_color_temp: 1000
+    sleep_rgb_or_color_temp: color_temp
+    sleep_transition: 1.0
+    min_sunset_time: "21:00:00"
+    transition: 45.0
+    initial_transition: 1.0
+    interval: 90
+    intercept: true
+    multi_light_intercept: true
+    take_over_control: true
+    take_over_control_mode: pause_all
+    skip_redundant_commands: true
+    adapt_only_on_bare_turn_on: false
+    adapt_delay: 0.0
+    brightness_mode: linear
+    brightness_mode_time_dark: 18000
+    brightness_mode_time_light: 3600
+
+lovelace:
+  mode: yaml
+  resources:
+    - url: /hacsfiles/vacuum-card/vacuum-card.js
+      type: module
+    - url: /hacsfiles/purifier-card/purifier-card.js
+      type: module
+    - url: /hacsfiles/lovelace-mushroom/mushroom.js
+      type: module
+    - url: /hacsfiles/mini-graph-card/mini-graph-card-bundle.js
+      type: module
+    - url: /hacsfiles/scheduler-card/scheduler-card.js
+      type: module
 
 shell_command:
   push_config: "/bin/sh /config/scripts/push_config.sh"
