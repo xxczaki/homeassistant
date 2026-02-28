@@ -341,6 +341,16 @@
           entity_id: person.antek
           state: home
   actions:
+  - action: scene.create
+    data:
+      scene_id: before_leaving
+      snapshot_entities:
+      - light.hallway
+      - light.living_room
+      - light.bathroom
+      - light.laundry_room
+      - light.kitchen
+      - light.bed
   - target:
       entity_id:
       - light.hallway
@@ -361,6 +371,39 @@
       - input_boolean.suppress_bathroom_auto_light
       - input_boolean.suppress_laundry_room_auto_light
     action: input_boolean.turn_off
+  - target:
+      entity_id: input_boolean.away_lights_snapshot
+    action: input_boolean.turn_on
+  mode: single
+- id: arrive_home_restore_lights
+  alias: 'Presence: Arrive home -> restore lights'
+  description: >-
+    Restores the light snapshot taken when leaving home. Triggered by any motion
+    sensor turning on while the away_lights_snapshot flag is set.
+  triggers:
+  - entity_id: binary_sensor.hallway_motion
+    to: 'on'
+    trigger: state
+  - entity_id: binary_sensor.living_room_motion
+    to: 'on'
+    trigger: state
+  - entity_id: binary_sensor.bathroom_motion
+    to: 'on'
+    trigger: state
+  - entity_id: binary_sensor.laundry_room_motion
+    to: 'on'
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: input_boolean.away_lights_snapshot
+    state: 'on'
+  actions:
+  - target:
+      entity_id: input_boolean.away_lights_snapshot
+    action: input_boolean.turn_off
+  - action: scene.turn_on
+    target:
+      entity_id: scene.before_leaving
   mode: single
 - id: push_config_on_shutdown
   alias: 'System: Push config to GitHub on shutdown'
