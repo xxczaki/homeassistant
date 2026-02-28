@@ -51,7 +51,7 @@ adaptive_lighting:
     brightness_mode_time_light: 3600
 
 lovelace:
-  mode: yaml
+  resource_mode: yaml
   resources:
     - url: /hacsfiles/vacuum-card/vacuum-card.js
       type: module
@@ -63,6 +63,13 @@ lovelace:
       type: module
     - url: /hacsfiles/scheduler-card/scheduler-card.js
       type: module
+  dashboards:
+    lovelace:
+      mode: yaml
+      filename: ui-lovelace.yaml
+      title: Overview
+      icon: mdi:view-dashboard
+      show_in_sidebar: true
 
 shell_command:
   push_config: "/bin/sh /config/scripts/push_config.sh"
