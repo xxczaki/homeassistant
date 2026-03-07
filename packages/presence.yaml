@@ -8,9 +8,6 @@ input_boolean:
   suppress_laundry_room_auto_light:
     name: Suppress laundry room auto light
     icon: mdi:light-switch-off
-  away_lights_snapshot:
-    name: Away lights snapshot exists
-    icon: mdi:camera
 
 input_number:
   presence_grace_seconds:

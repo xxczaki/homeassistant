@@ -48,7 +48,7 @@
   alias: 'Presence: Hallway motion -> hallway on (lux gated)'
   description: ''
   triggers:
-  - entity_id: binary_sensor.hallway_motion
+  - entity_id: binary_sensor.hallway_motion_occupancy
     to: 'on'
     trigger: state
   conditions:
@@ -58,7 +58,7 @@
          < states('input_number.light_on_lux_threshold')|float(0) }}
   actions:
   - target:
-      entity_id: light.hallway
+      entity_id: light.hallway_light
     action: light.turn_on
   mode: single
 - id: hallway_light_off
@@ -67,23 +67,23 @@
     Triggers on hallway motion sensor going off (~10s after last motion).
     Fixes bug where mode:restart on current_room changes kept resetting the timer.
   triggers:
-  - entity_id: binary_sensor.hallway_motion
+  - entity_id: binary_sensor.hallway_motion_occupancy
     to: 'off'
     trigger: state
   conditions:
   - condition: state
-    entity_id: light.hallway
+    entity_id: light.hallway_light
     state: 'on'
   actions:
   - variables:
       min_on: "{{ states('input_number.presence_grace_seconds')|int(30) }}"
       hallway_on_for: >-
-        {{ (as_timestamp(now()) - as_timestamp(states.light.hallway.last_changed)) | int(0) }}
+        {{ (as_timestamp(now()) - as_timestamp(states.light.hallway_light.last_changed)) | int(0) }}
       remaining: "{{ [0, (min_on - hallway_on_for)] | max }}"
   - delay:
       seconds: "{{ remaining }}"
   - target:
-      entity_id: light.hallway
+      entity_id: light.hallway_light
     action: light.turn_off
   mode: restart
 - id: room_light_on_and_track
@@ -93,15 +93,15 @@
     (lux gated, suppress checked), immediately turns off other rooms where
     motion is off (Layer 1 turn-off), and clears prev room suppress flag.
   triggers:
-  - entity_id: binary_sensor.living_room_motion
+  - entity_id: binary_sensor.living_room_motion_occupancy
     to: 'on'
     trigger: state
     id: living_room
-  - entity_id: binary_sensor.bathroom_motion
+  - entity_id: binary_sensor.bathroom_motion_occupancy
     to: 'on'
     trigger: state
     id: bathroom
-  - entity_id: binary_sensor.laundry_room_motion
+  - entity_id: binary_sensor.laundry_room_motion_occupancy
     to: 'on'
     trigger: state
     id: laundry_room
@@ -112,15 +112,15 @@
       rooms:
         living_room:
           light: light.living_room
-          motion: binary_sensor.living_room_motion
+          motion: binary_sensor.living_room_motion_occupancy
           suppress: input_boolean.suppress_living_room_auto_light
         bathroom:
-          light: light.bathroom
-          motion: binary_sensor.bathroom_motion
+          light: light.bathroom_light
+          motion: binary_sensor.bathroom_motion_occupancy
           suppress: input_boolean.suppress_bathroom_auto_light
         laundry_room:
-          light: light.laundry_room
-          motion: binary_sensor.laundry_room_motion
+          light: light.laundry_room_light
+          motion: binary_sensor.laundry_room_motion_occupancy
           suppress: input_boolean.suppress_laundry_room_auto_light
   - target:
       entity_id: input_select.current_room
@@ -138,8 +138,10 @@
       - target:
           entity_id: "{{ rooms[new_room].light }}"
         action: light.turn_on
+  - delay:
+      seconds: "{{ states('input_number.presence_grace_seconds')|int(30) }}"
   - repeat:
-      for_each: "{{ rooms.keys() | reject('eq', new_room) | list }}"
+      for_each: "{{ rooms.keys() | reject('eq', states('input_select.current_room')) | list }}"
       sequence:
       - condition: template
         value_template: >-
@@ -165,7 +167,7 @@
     non-current rooms where motion is off. Safe to restart because it checks
     final state after delay, not captured state.
   triggers:
-  - entity_id: binary_sensor.hallway_motion
+  - entity_id: binary_sensor.hallway_motion_occupancy
     to: 'on'
     trigger: state
   actions:
@@ -176,13 +178,13 @@
       rooms:
         living_room:
           light: light.living_room
-          motion: binary_sensor.living_room_motion
+          motion: binary_sensor.living_room_motion_occupancy
         bathroom:
-          light: light.bathroom
-          motion: binary_sensor.bathroom_motion
+          light: light.bathroom_light
+          motion: binary_sensor.bathroom_motion_occupancy
         laundry_room:
-          light: light.laundry_room
-          motion: binary_sensor.laundry_room_motion
+          light: light.laundry_room_light
+          motion: binary_sensor.laundry_room_motion_occupancy
   - repeat:
       for_each: "{{ rooms.keys() | reject('eq', current) | list }}"
       sequence:
@@ -202,13 +204,13 @@
     The for: parameter auto-resets if motion cycles off->on->off.
     Living room is exempt (sensor position unreliable for stillness detection).
   triggers:
-  - entity_id: binary_sensor.bathroom_motion
+  - entity_id: binary_sensor.bathroom_motion_occupancy
     to: 'off'
     for:
       minutes: "{{ states('input_number.room_light_timeout_minutes')|int(10) }}"
     trigger: state
     id: bathroom
-  - entity_id: binary_sensor.laundry_room_motion
+  - entity_id: binary_sensor.laundry_room_motion_occupancy
     to: 'off'
     for:
       minutes: "{{ states('input_number.room_light_timeout_minutes')|int(10) }}"
@@ -216,10 +218,17 @@
     id: laundry_room
   conditions:
   - condition: template
-    value_template: "{{ is_state('light.' ~ trigger.id, 'on') }}"
+    value_template: >-
+      {% set rooms = {'bathroom': 'light.bathroom_light',
+                      'laundry_room': 'light.laundry_room_light'} %}
+      {{ is_state(rooms[trigger.id], 'on') }}
   actions:
+  - variables:
+      rooms:
+        bathroom: light.bathroom_light
+        laundry_room: light.laundry_room_light
   - target:
-      entity_id: "{{ 'light.' ~ trigger.id }}"
+      entity_id: "{{ rooms[trigger.id] }}"
     action: light.turn_off
   - condition: template
     value_template: "{{ states('input_select.current_room') == trigger.id }}"
@@ -242,11 +251,11 @@
     to: 'off'
     trigger: state
     id: living_room_off
-  - entity_id: light.bathroom
+  - entity_id: light.bathroom_light
     to: 'off'
     trigger: state
     id: bathroom_off
-  - entity_id: light.laundry_room
+  - entity_id: light.laundry_room_light
     to: 'off'
     trigger: state
     id: laundry_room_off
@@ -254,11 +263,11 @@
     to: 'on'
     trigger: state
     id: living_room_on
-  - entity_id: light.bathroom
+  - entity_id: light.bathroom_light
     to: 'on'
     trigger: state
     id: bathroom_on
-  - entity_id: light.laundry_room
+  - entity_id: light.laundry_room_light
     to: 'on'
     trigger: state
     id: laundry_room_on
@@ -286,7 +295,7 @@
       room: "{{ map[trigger.id].room }}"
       turned: "{{ map[trigger.id].turned }}"
       suppress_entity: "{{ 'input_boolean.suppress_' ~ room ~ '_auto_light' }}"
-      motion_entity: "{{ 'binary_sensor.' ~ room ~ '_motion' }}"
+      motion_entity: "{{ 'binary_sensor.' ~ room ~ '_motion_occupancy' }}"
   - choose:
     - conditions:
       - condition: template
@@ -319,10 +328,10 @@
     id: person_left
   - platform: template
     value_template: >-
-      {{ is_state('binary_sensor.hallway_motion', 'off')
-         and is_state('binary_sensor.living_room_motion', 'off')
-         and is_state('binary_sensor.bathroom_motion', 'off')
-         and is_state('binary_sensor.laundry_room_motion', 'off') }}
+      {{ is_state('binary_sensor.hallway_motion_occupancy', 'off')
+         and is_state('binary_sensor.living_room_motion_occupancy', 'off')
+         and is_state('binary_sensor.bathroom_motion_occupancy', 'off')
+         and is_state('binary_sensor.laundry_room_motion_occupancy', 'off') }}
     for:
       minutes: 10
     id: no_motion
@@ -345,20 +354,20 @@
     data:
       scene_id: before_leaving
       snapshot_entities:
-      - light.hallway
+      - light.hallway_light
       - light.living_room
-      - light.bathroom
-      - light.laundry_room
-      - light.kitchen
-      - light.bed
+      - light.bathroom_light
+      - light.laundry_room_light
+      - light.kitchen_light
+      - light.bedroom_light
   - target:
       entity_id:
-      - light.hallway
+      - light.hallway_light
       - light.living_room
-      - light.bathroom
-      - light.laundry_room
-      - light.kitchen
-      - light.bed
+      - light.bathroom_light
+      - light.laundry_room_light
+      - light.kitchen_light
+      - light.bedroom_light
     action: light.turn_off
   - target:
       entity_id: input_select.current_room
@@ -381,16 +390,16 @@
     Restores the light snapshot taken when leaving home. Triggered by any motion
     sensor turning on while the away_lights_snapshot flag is set.
   triggers:
-  - entity_id: binary_sensor.hallway_motion
+  - entity_id: binary_sensor.hallway_motion_occupancy
     to: 'on'
     trigger: state
-  - entity_id: binary_sensor.living_room_motion
+  - entity_id: binary_sensor.living_room_motion_occupancy
     to: 'on'
     trigger: state
-  - entity_id: binary_sensor.bathroom_motion
+  - entity_id: binary_sensor.bathroom_motion_occupancy
     to: 'on'
     trigger: state
-  - entity_id: binary_sensor.laundry_room_motion
+  - entity_id: binary_sensor.laundry_room_motion_occupancy
     to: 'on'
     trigger: state
   conditions:
@@ -405,6 +414,47 @@
     target:
       entity_id: scene.before_leaving
   mode: single
+- id: living_room_switch_toggle
+  alias: 'Switch: Living room toggle + all others off'
+  description: >-
+    Hue dimmer switch on_press toggles living room lights and turns off all other
+    lights. off_press turns off everything including living room.
+  triggers:
+  - trigger: mqtt
+    topic: zigbee2mqtt/Living Room Switch/action
+    payload: on_press
+    id: 'on'
+  - trigger: mqtt
+    topic: zigbee2mqtt/Living Room Switch/action
+    payload: off_press
+    id: 'off'
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: 'on'
+      sequence:
+      - action: light.toggle
+        target:
+          entity_id: light.living_room
+      - action: light.turn_off
+        target:
+          entity_id:
+          - light.hallway_light
+          - light.bathroom_light
+          - light.laundry_room_light
+    - conditions:
+      - condition: trigger
+        id: 'off'
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id:
+          - light.living_room
+          - light.hallway_light
+          - light.bathroom_light
+          - light.laundry_room_light
+  mode: single
 - id: push_config_on_shutdown
   alias: 'System: Push config to GitHub on shutdown'
   description: >-
@@ -415,4 +465,21 @@
     event: shutdown
   actions:
   - action: shell_command.push_config
+  mode: single
+- id: kitchen_switch_toggle
+  alias: 'Switch: Kitchen switch -> toggle kitchen light (TRÅDFRI)'
+  description: >-
+    ZBMINIL2 with relay physically disabled. Switch still sends ON/OFF state
+    via Zigbee. state_action enabled so state changes publish as action events.
+    Toggles the IKEA TRÅDFRI kitchen light on each press.
+  triggers:
+  - trigger: mqtt
+    topic: zigbee2mqtt/Kitchen Switch/action
+  conditions:
+  - condition: template
+    value_template: "{{ trigger.payload in ['on', 'off', 'toggle'] }}"
+  actions:
+  - action: light.toggle
+    target:
+      entity_id: light.0x58263afffe4681f1
   mode: single

@@ -8,6 +8,13 @@ frontend:
 homeassistant:
   packages: !include_dir_named packages
 
+light:
+  - platform: group
+    name: Living Room
+    entities:
+      - light.kitchen_light
+      - light.bedroom_light
+
 automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
@@ -24,9 +31,9 @@ adaptive_lighting:
   - name: "Home"
     lights:
       - light.living_room
-      - light.bathroom
-      - light.laundry_room
-      - light.hallway
+      - light.bathroom_light
+      - light.laundry_room_light
+      - light.hallway_light
     min_brightness: 75
     max_brightness: 100
     min_color_temp: 2000
