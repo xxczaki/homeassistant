@@ -1,5 +1,5 @@
 - id: '1720829310579'
-  alias: Vaccum bin full notification
+  alias: Vacuum bin full notification
   description: ''
   trigger:
   - type: turned_on
@@ -12,7 +12,7 @@
   - service: notify.mobile_app_undefined_iphone
     metadata: {}
     data:
-      title: Vaccum bin full
+      title: Vacuum bin full
       message: Empty the bin or the scheduled cleaning will fail!
   mode: single
 - id: '1764467462408'
@@ -481,5 +481,5 @@
   actions:
   - action: light.toggle
     target:
-      entity_id: light.0x58263afffe4681f1
+      entity_id: light.kitchenette_light_strip
   mode: single
