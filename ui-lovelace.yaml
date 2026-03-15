@@ -31,6 +31,13 @@ views:
                 tap_action:
                   action: toggle
               - type: state-icon
+                entity: light.kitchenette_light_strip
+                style:
+                  left: "43%"
+                  top: "78%"
+                tap_action:
+                  action: toggle
+              - type: state-icon
                 entity: light.hue_ambiance_lamp_1
                 style:
                   left: "18%"
@@ -130,7 +137,7 @@ views:
           - type: entities
             show_header_toggle: false
             entities:
-              - entity: automation.vaccum_bin_full_notification
+              - entity: automation.vacuum_bin_full_notification
 
       # Purifiers
       - type: grid
