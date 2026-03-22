@@ -17,14 +17,14 @@ views:
             dark_mode_image: /local/images/floorplan-dark.png
             elements:
               - type: state-icon
-                entity: light.bed
+                entity: light.bedroom_light
                 style:
                   left: "68%"
                   top: "40%"
                 tap_action:
                   action: toggle
               - type: state-icon
-                entity: light.kitchen
+                entity: light.kitchen_light
                 style:
                   left: "43%"
                   top: "40%"
@@ -38,21 +38,21 @@ views:
                 tap_action:
                   action: toggle
               - type: state-icon
-                entity: light.hue_ambiance_lamp_1
+                entity: light.hallway_light
                 style:
                   left: "18%"
                   top: "37%"
                 tap_action:
                   action: toggle
               - type: state-icon
-                entity: light.hue_ambiance_lamp_2
+                entity: light.bathroom_light
                 style:
                   left: "27%"
                   top: "67%"
                 tap_action:
                   action: toggle
               - type: state-icon
-                entity: light.hue_ambiance_lamp_5
+                entity: light.laundry_room_light
                 style:
                   left: "7.5%"
                   top: "68%"
@@ -71,19 +71,19 @@ views:
               rows: auto
             cards:
               - type: custom:mushroom-light-card
-                entity: light.hue_ambiance_lamp_5
+                entity: light.laundry_room_light
                 use_light_color: false
                 show_brightness_control: false
                 fill_container: false
                 icon: mdi:washing-machine
                 layout: vertical
               - type: custom:mushroom-light-card
-                entity: light.hue_ambiance_lamp_1
+                entity: light.hallway_light
                 layout: vertical
                 show_brightness_control: false
                 icon: mdi:coat-rack
               - type: custom:mushroom-light-card
-                entity: light.hue_ambiance_lamp_2
+                entity: light.bathroom_light
                 fill_container: false
                 show_brightness_control: false
                 collapsible_controls: false
@@ -128,11 +128,6 @@ views:
               - sensor.undefined_iphone_battery_state
               - vacuum
             exclude:
-              - light.hue_ambiance_lamp_1
-              - light.hue_ambiance_lamp_2
-              - light.hue_ambiance_lamp_3
-              - light.hue_ambiance_lamp_4
-              - light.hue_ambiance_lamp_5
               - light.living_room
           - type: entities
             show_header_toggle: false

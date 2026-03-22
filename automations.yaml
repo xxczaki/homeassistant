@@ -51,11 +51,7 @@
   - entity_id: binary_sensor.hallway_motion_occupancy
     to: 'on'
     trigger: state
-  conditions:
-  - condition: template
-    value_template: >-
-      {{ states('sensor.hallway_illuminance')|float(0)
-         < states('input_number.light_on_lux_threshold')|float(0) }}
+  conditions: []
   actions:
   - target:
       entity_id: light.hallway_light
@@ -131,9 +127,7 @@
     - conditions:
       - condition: template
         value_template: >-
-          {{ is_state(rooms[new_room].suppress, 'off')
-             and states('sensor.' ~ new_room ~ '_illuminance')|float(0)
-                < states('input_number.light_on_lux_threshold')|float(0) }}
+          {{ is_state(rooms[new_room].suppress, 'off') }}
       sequence:
       - target:
           entity_id: "{{ rooms[new_room].light }}"
