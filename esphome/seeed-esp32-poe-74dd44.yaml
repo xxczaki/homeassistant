@@ -1,0 +1,17 @@
+substitutions:
+  name: seeed-esp32-poe-74dd44
+  friendly_name: Bluetooth Proxy
+packages:
+  esphome.bluetooth-proxy: github://esphome/bluetooth-proxies/seeed/seeed-esp32-poe.yaml@main
+esphome:
+  name: ${name}
+  name_add_mac_suffix: false
+  friendly_name: ${friendly_name}
+api:
+  encryption:
+    key: !secret api_encryption_key
+ethernet:
+  manual_ip:
+    static_ip: 10.10.10.140
+    gateway: 10.10.10.1
+    subnet: 255.255.255.0
