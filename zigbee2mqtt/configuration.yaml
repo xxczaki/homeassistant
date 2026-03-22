@@ -40,6 +40,8 @@ devices:
   '0x001788010f69cc74':
     friendly_name: Laundry Room Motion
   '0x001788010b7d2b95':
-    friendly_name: '0x001788010b7d2b95'
+    friendly_name: Living Room Switch
   '0x58263afffe4681f1':
-    friendly_name: '0x58263afffe4681f1'
+    friendly_name: Kitchenette Light Strip
+  '0xf082c0fffe4db2e4':
+    friendly_name: Kitchen Switch
