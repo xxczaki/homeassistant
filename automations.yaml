@@ -471,10 +471,12 @@
   triggers:
   - trigger: state
     entity_id: switch.kitchen_switch
+    from: 'off'
     to: 'on'
     id: 'on'
   - trigger: state
     entity_id: switch.kitchen_switch
+    from: 'on'
     to: 'off'
     id: 'off'
   actions:
