@@ -27,16 +27,6 @@ input_number:
     mode: slider
     unit_of_measurement: lx
     icon: mdi:sun-wireless
-  room_light_timeout_minutes:
-    name: Room light timeout
-    min: 1
-    max: 30
-    step: 0.5
-    initial: 1.5
-    mode: slider
-    unit_of_measurement: min
-    icon: mdi:timer-outline
-
 input_select:
   current_room:
     name: Current room
