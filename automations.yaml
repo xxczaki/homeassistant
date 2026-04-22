@@ -189,49 +189,6 @@
           option: none
         action: input_select.select_option
   mode: single
-- id: room_light_fallback_off
-  alias: 'Presence: Room motion timeout -> light off (Layer 3)'
-  description: >-
-    Safety net: if a room motion sensor has been off for the configured timeout,
-    turn off that room light. Catches any edge cases missed by Layers 1 and 2.
-    The for: parameter auto-resets if motion cycles off->on->off.
-    Living room is exempt (sensor position unreliable for stillness detection).
-  triggers:
-  - entity_id: binary_sensor.bathroom_motion_occupancy
-    to: 'off'
-    for:
-      minutes: "{{ states('input_number.room_light_timeout_minutes')|int(10) }}"
-    trigger: state
-    id: bathroom
-  - entity_id: binary_sensor.laundry_room_motion_occupancy
-    to: 'off'
-    for:
-      minutes: "{{ states('input_number.room_light_timeout_minutes')|int(10) }}"
-    trigger: state
-    id: laundry_room
-  conditions:
-  - condition: template
-    value_template: >-
-      {% set rooms = {'bathroom': 'light.bathroom_light',
-                      'laundry_room': 'light.laundry_room_light'} %}
-      {{ is_state(rooms[trigger.id], 'on') }}
-  actions:
-  - variables:
-      rooms:
-        bathroom: light.bathroom_light
-        laundry_room: light.laundry_room_light
-  - target:
-      entity_id: "{{ rooms[trigger.id] }}"
-    action: light.turn_off
-  - condition: template
-    value_template: "{{ states('input_select.current_room') == trigger.id }}"
-  - target:
-      entity_id: input_select.current_room
-    data:
-      option: none
-    action: input_select.select_option
-  mode: parallel
-  max: 3
 - id: manual_light_override
   alias: 'Presence: Manual light override suppress management'
   description: >-

@@ -446,8 +446,6 @@ views:
                 name: Person
               - entity: input_number.presence_grace_seconds
                 name: Grace seconds
-              - entity: input_number.room_light_timeout_minutes
-                name: Room timeout (min)
               - entity: input_boolean.suppress_living_room_auto_light
                 name: Suppress LR
               - entity: input_boolean.suppress_bathroom_auto_light
@@ -487,15 +485,4 @@ views:
               Hallway is `off`; rule disarmed.
               {% endif %}
 
-              **R3 (bathroom / laundry timeout)** — fires when the room's motion has been `off` for ≥ {{ states('input_number.room_light_timeout_minutes') }} min.
-              {% set thresh = (states('input_number.room_light_timeout_minutes') | float(1.5) * 60) | int %}
-              {% for room in ['bathroom', 'laundry_room'] %}
-              {% set ent = 'binary_sensor.' ~ room ~ '_motion_occupancy' %}
-              {% set light = 'light.' ~ room ~ ('_light' if room == 'bathroom' else '_light') %}
-              - **{{ room }}**: motion = {{ states(ent) }}; light = {{ states(light) }};
-                {% if states(ent) == 'off' and states(light) == 'on' %}
-                off for {{ (now() - states[ent].last_changed).total_seconds() | int }} s of {{ thresh }} →
-                {% set remaining = thresh - (now() - states[ent].last_changed).total_seconds() | int %}
-                {% if remaining > 0 %}fires in **{{ remaining }} s**{% else %}would fire now{% endif %}
-                {% else %}disarmed{% endif %}
-              {% endfor %}
+              No timeout-based turnoff exists by design. Lights in the current room stay on as long as you're in the flat; R1 (room transition) and R5 (leave home) are the only other turnoff signals.

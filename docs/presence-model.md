@@ -47,13 +47,9 @@ Rationale: continuous hallway motion for 60 s means the user is *in* the hallway
 
 This replaces the old `hallway_quick_room_turnoff` (which fired on any 30 s of hallway motion and was responsible for the 22:15:19 bug on 2026‑04‑22).
 
-### R3 — Room timeout (Layer 3, bathroom / laundry only)
+### R3 — (removed)
 
-**Trigger**: bathroom or laundry motion has been `off` for `room_light_timeout_minutes`.
-
-**Action**: turn off that room's light; if it was `current_room`, set `current_room` to `none`.
-
-**Never applies to the living room** (blind spot).
+Intentionally absent. Pure presence: a room's light stays on as long as it's the `current_room`. Sitting still (toilet use, reading on the bed, folding laundry) is not grounds for turning off the light. Turnoff is driven only by R1 (you entered another room), R2 (you're dwelling in the hallway), or R5 (you left the house).
 
 ### R4 — Manual
 
@@ -71,8 +67,8 @@ User presses a physical switch / UI toggle / voice command. `manual_light_overri
 | 2 | Sit on the bed in LR, still for 3 hours | LR stays on; `current_room` stays `living_room`; nothing else fires | No rule fires |
 | 3 | LR → hallway (grab mail) → LR, total 20 s | LR stays on throughout; `current_room` stays `living_room` | No rule fires |
 | 4 | LR → bathroom → LR, total 30 s (quick use) | Bathroom on during visit; LR stays on | R1 scheduled but current_room flips back → R1 turns off bathroom, not LR |
-| 5 | LR → bathroom, stay 10 min | LR off 30 s after entering bathroom; bathroom stays on until 1.5 min of no motion | R1 turns off LR, eventually R3 turns off bathroom |
-| 6 | LR → laundry → hang in hallway 3 min → LR | LR off 30 s after entering laundry; laundry off after 1.5 min of stillness; nothing else fires during hallway dwell because laundry was already off | R1, R3 |
+| 5 | LR → bathroom, stay 30 min (toilet, reading, etc.) | LR off 30 s after entering bathroom; **bathroom stays on the entire 30 min regardless of motion stillness** | R1 only |
+| 6 | LR → laundry → hang in hallway 3 min → LR | LR off 30 s after entering laundry; R2 fires at hallway‑60s → laundry off, current_room=none; LR back on when you re‑enter | R1, R2 |
 | 7 | **LR → hallway only, dwell 2 min, return to LR** | LR off ~60 s into hallway dwell; `current_room=none`; on return, LR motion fires and LR comes back on, `current_room=living_room` | **R2** (the new rule) |
 | 8 | LR → kitchen (via hallway) → kitchen dwell 30 min → LR | LR stays on the whole time. Kitchen is not tracked; no rule turns off LR. | No rule fires (known limitation) |
 | 9 | User turns off LR via Hue dimmer while in LR | LR off; `suppress_living_room_auto_light = on`; LR motion won't re-on until either user turns it on again (clears flag) or the flag is cleared on arrive-home | R4 |
@@ -85,9 +81,8 @@ User presses a physical switch / UI toggle / voice command. `manual_light_overri
 | Knob | File | Default | Tradeoff |
 |---|---|---|---|
 | `presence_grace_seconds` | `packages/presence.yaml` | 30 s | Higher = more forgiving of fast returns; lower = snappier cleanup |
-| `room_light_timeout_minutes` | `packages/presence.yaml` | 1.5 min | How long bathroom/laundry stay on after motion clears |
 | Hallway dwell threshold | `automations.yaml` R2 trigger `for:` | 60 s | Higher = less likely to trip on long transits; lower = faster LR-off when hallway dwelling |
-| Hue sensor `occupancy_timeout` (per device, in Z2M) | Z2M per-device config | LR 5 / BR 15 / HW 30 / Laundry 60 | Lower = sensor reports off faster after you stop moving. Under the refactor this only matters for R3 (bathroom + laundry fallback). |
+| Hue sensor `occupancy_timeout` (per device, in Z2M) | Z2M per-device config | LR 5 / BR 15 / HW 30 / Laundry 60 | Lower = sensor reports off faster after you stop moving. Under the pure-presence model this only affects when R1/R2 can next trigger on re-entry — no longer gates any turnoff. |
 
 ## Live verification
 
