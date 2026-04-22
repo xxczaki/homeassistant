@@ -488,7 +488,7 @@ views:
               {% endif %}
 
               **R3 (bathroom / laundry timeout)** — fires when the room's motion has been `off` for ≥ {{ states('input_number.room_light_timeout_minutes') }} min.
-              {% set thresh = (states('input_number.room_light_timeout_minutes') | float * 60) | int %}
+              {% set thresh = (states('input_number.room_light_timeout_minutes') | float(1.5) * 60) | int %}
               {% for room in ['bathroom', 'laundry_room'] %}
               {% set ent = 'binary_sensor.' ~ room ~ '_motion_occupancy' %}
               {% set light = 'light.' ~ room ~ ('_light' if room == 'bathroom' else '_light') %}
