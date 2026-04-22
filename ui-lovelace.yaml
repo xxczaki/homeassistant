@@ -426,3 +426,76 @@ views:
                   - type: custom:mushroom-update-card
                     entity: update.hacs_update
                     name: HACS
+
+  # ── Presence Debug ────────────────────────────────────────
+  - title: Presence
+    icon: mdi:motion-sensor
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: State
+            heading_style: title
+            icon: mdi:map-marker
+          - type: entities
+            entities:
+              - entity: input_select.current_room
+                name: Current room
+              - entity: person.antek
+                name: Person
+              - entity: input_number.presence_grace_seconds
+                name: Grace seconds
+              - entity: input_number.room_light_timeout_minutes
+                name: Room timeout (min)
+              - entity: input_boolean.suppress_living_room_auto_light
+                name: Suppress LR
+              - entity: input_boolean.suppress_bathroom_auto_light
+                name: Suppress bathroom
+              - entity: input_boolean.suppress_laundry_room_auto_light
+                name: Suppress laundry
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Motion sensors
+            heading_style: title
+            icon: mdi:walk
+          - type: markdown
+            content: |
+              | Sensor | State | Seconds in state |
+              |---|---|---|
+              | Living Room | {{ states('binary_sensor.living_room_motion_occupancy') }} | {{ (now() - states.binary_sensor.living_room_motion_occupancy.last_changed).total_seconds() | int }} s |
+              | Hallway | {{ states('binary_sensor.hallway_motion_occupancy') }} | {{ (now() - states.binary_sensor.hallway_motion_occupancy.last_changed).total_seconds() | int }} s |
+              | Bathroom | {{ states('binary_sensor.bathroom_motion_occupancy') }} | {{ (now() - states.binary_sensor.bathroom_motion_occupancy.last_changed).total_seconds() | int }} s |
+              | Laundry Room | {{ states('binary_sensor.laundry_room_motion_occupancy') }} | {{ (now() - states.binary_sensor.laundry_room_motion_occupancy.last_changed).total_seconds() | int }} s |
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Rule evaluations
+            heading_style: title
+            icon: mdi:timer-cog
+          - type: markdown
+            content: |
+              **R2 (hallway dwell turnoff)** — fires when hallway motion has been `on` for ≥ 60 s.
+              {% set hallway_state = states('binary_sensor.hallway_motion_occupancy') %}
+              {% set hallway_secs = (now() - states.binary_sensor.hallway_motion_occupancy.last_changed).total_seconds() | int %}
+              {% if hallway_state == 'on' %}
+              Hallway has been `on` for **{{ hallway_secs }} s** → {% if hallway_secs >= 60 %}would fire now{% else %}fires in **{{ 60 - hallway_secs }} s** if motion stays on{% endif %}.
+              {% else %}
+              Hallway is `off`; rule disarmed.
+              {% endif %}
+
+              **R3 (bathroom / laundry timeout)** — fires when the room's motion has been `off` for ≥ {{ states('input_number.room_light_timeout_minutes') }} min.
+              {% set thresh = (states('input_number.room_light_timeout_minutes') | float * 60) | int %}
+              {% for room in ['bathroom', 'laundry_room'] %}
+              {% set ent = 'binary_sensor.' ~ room ~ '_motion_occupancy' %}
+              {% set light = 'light.' ~ room ~ ('_light' if room == 'bathroom' else '_light') %}
+              - **{{ room }}**: motion = {{ states(ent) }}; light = {{ states(light) }};
+                {% if states(ent) == 'off' and states(light) == 'on' %}
+                off for {{ (now() - states[ent].last_changed).total_seconds() | int }} s of {{ thresh }} →
+                {% set remaining = thresh - (now() - states[ent].last_changed).total_seconds() | int %}
+                {% if remaining > 0 %}fires in **{{ remaining }} s**{% else %}would fire now{% endif %}
+                {% else %}disarmed{% endif %}
+              {% endfor %}
