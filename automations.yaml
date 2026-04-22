@@ -86,8 +86,10 @@
   alias: 'Presence: Room motion -> light on + track room (Layer 1)'
   description: >-
     Primary room entry automation. Tracks current room, turns on room light
-    (lux gated, suppress checked), immediately turns off other rooms where
-    motion is off (Layer 1 turn-off), and clears prev room suppress flag.
+    (suppress checked), waits presence_grace_seconds, then turns off every
+    tracked room that is not the live current_room (presence-based: motion-
+    off is NOT required, since current_room != room proves absence under the
+    single-occupant + hallway-transit model). Clears prev room suppress flag.
   triggers:
   - entity_id: binary_sensor.living_room_motion_occupancy
     to: 'on'
@@ -138,9 +140,7 @@
       for_each: "{{ rooms.keys() | reject('eq', states('input_select.current_room')) | list }}"
       sequence:
       - condition: template
-        value_template: >-
-          {{ is_state(rooms[repeat.item].light, 'on')
-             and is_state(rooms[repeat.item].motion, 'off') }}
+        value_template: "{{ is_state(rooms[repeat.item].light, 'on') }}"
       - target:
           entity_id: "{{ rooms[repeat.item].light }}"
         action: light.turn_off
@@ -154,42 +154,41 @@
         action: input_boolean.turn_off
   mode: parallel
   max: 3
-- id: hallway_quick_room_turnoff
-  alias: 'Presence: Hallway motion -> turn off non-current rooms (Layer 2)'
+- id: hallway_dwell_turnoff
+  alias: 'Presence: Hallway dwell -> turn off current room (Layer 2)'
   description: >-
-    Redundant safety: on hallway motion, waits grace period then turns off all
-    non-current rooms where motion is off. Safe to restart because it checks
-    final state after delay, not captured state.
+    When hallway motion has been continuously 'on' for 60s, the single
+    occupant is dwelling in the hallway (e.g. hanging laundry) rather than
+    transiting. Turn off whatever current_room points to and reset it to
+    none. Under the single-person assumption, the user cannot simultaneously
+    be in a tracked room. 60s threshold filters normal transits and blips.
   triggers:
-  - entity_id: binary_sensor.hallway_motion_occupancy
+  - trigger: state
+    entity_id: binary_sensor.hallway_motion_occupancy
     to: 'on'
-    trigger: state
+    for:
+      seconds: 60
   actions:
-  - delay:
-      seconds: "{{ states('input_number.presence_grace_seconds')|int(30) }}"
   - variables:
       current: "{{ states('input_select.current_room') }}"
       rooms:
-        living_room:
-          light: light.living_room
-          motion: binary_sensor.living_room_motion_occupancy
-        bathroom:
-          light: light.bathroom_light
-          motion: binary_sensor.bathroom_motion_occupancy
-        laundry_room:
-          light: light.laundry_room_light
-          motion: binary_sensor.laundry_room_motion_occupancy
-  - repeat:
-      for_each: "{{ rooms.keys() | reject('eq', current) | list }}"
-      sequence:
+        living_room: light.living_room
+        bathroom: light.bathroom_light
+        laundry_room: light.laundry_room_light
+  - choose:
+    - conditions:
       - condition: template
-        value_template: >-
-          {{ is_state(rooms[repeat.item].light, 'on')
-             and is_state(rooms[repeat.item].motion, 'off') }}
+        value_template: "{{ current in rooms }}"
+      sequence:
       - target:
-          entity_id: "{{ rooms[repeat.item].light }}"
+          entity_id: "{{ rooms[current] }}"
         action: light.turn_off
-  mode: restart
+      - target:
+          entity_id: input_select.current_room
+        data:
+          option: none
+        action: input_select.select_option
+  mode: single
 - id: room_light_fallback_off
   alias: 'Presence: Room motion timeout -> light off (Layer 3)'
   description: >-
