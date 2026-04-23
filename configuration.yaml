@@ -26,6 +26,10 @@ http:
 
 recorder:
   commit_interval: 30
+  exclude:
+    entities:
+      - sensor.pi_hole_latest_data_refresh
+      - sensor.pi_hole_remaining_until_blocking_mode
 
 adaptive_lighting:
   - name: "Home"
