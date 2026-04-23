@@ -90,6 +90,9 @@
     tracked room that is not the live current_room (presence-based: motion-
     off is NOT required, since current_room != room proves absence under the
     single-occupant + hallway-transit model). Clears prev room suppress flag.
+    mode: restart so a burst of motion triggers can't overflow a parallel
+    queue (previously mode: parallel/max:3 which dropped bursty motion on
+    2026-04-23 and turned off the room the user had just re-entered).
   triggers:
   - entity_id: binary_sensor.living_room_motion_occupancy
     to: 'on'
@@ -152,8 +155,7 @@
       - target:
           entity_id: "{{ rooms[prev_room].suppress }}"
         action: input_boolean.turn_off
-  mode: parallel
-  max: 3
+  mode: restart
 - id: hallway_dwell_turnoff
   alias: 'Presence: Hallway dwell -> turn off current room (Layer 2)'
   description: >-
