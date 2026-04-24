@@ -13,9 +13,9 @@ input_number:
   presence_grace_seconds:
     name: Minimum light on
     min: 20
-    max: 60
-    step: 1
-    initial: 30
+    max: 600
+    step: 10
+    initial: 180
     mode: slider
     unit_of_measurement: s
     icon: mdi:clock-time-eight
