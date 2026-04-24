@@ -270,7 +270,8 @@
   description: >-
     Primary: person.antek not_home for 2 minutes (WiFi-based via UniFi).
     Fallback: all motion sensors off for 10 minutes (if person is not home).
-    Also clears all suppress flags.
+    Turns everything off and clears all suppress flags. No snapshot/restore -
+    on return, room motion just triggers Layer 1 normally.
   triggers:
   - entity_id: person.antek
     to: not_home
@@ -302,16 +303,6 @@
           entity_id: person.antek
           state: home
   actions:
-  - action: scene.create
-    data:
-      scene_id: before_leaving
-      snapshot_entities:
-      - light.hallway_light
-      - light.living_room
-      - light.bathroom_light
-      - light.laundry_room_light
-      - light.kitchen_light
-      - light.bedroom_light
   - target:
       entity_id:
       - light.hallway_light
@@ -332,39 +323,6 @@
       - input_boolean.suppress_bathroom_auto_light
       - input_boolean.suppress_laundry_room_auto_light
     action: input_boolean.turn_off
-  - target:
-      entity_id: input_boolean.away_lights_snapshot
-    action: input_boolean.turn_on
-  mode: single
-- id: arrive_home_restore_lights
-  alias: 'Presence: Arrive home -> restore lights'
-  description: >-
-    Restores the light snapshot taken when leaving home. Triggered by any motion
-    sensor turning on while the away_lights_snapshot flag is set.
-  triggers:
-  - entity_id: binary_sensor.hallway_motion_occupancy
-    to: 'on'
-    trigger: state
-  - entity_id: binary_sensor.living_room_motion_occupancy
-    to: 'on'
-    trigger: state
-  - entity_id: binary_sensor.bathroom_motion_occupancy
-    to: 'on'
-    trigger: state
-  - entity_id: binary_sensor.laundry_room_motion_occupancy
-    to: 'on'
-    trigger: state
-  conditions:
-  - condition: state
-    entity_id: input_boolean.away_lights_snapshot
-    state: 'on'
-  actions:
-  - target:
-      entity_id: input_boolean.away_lights_snapshot
-    action: input_boolean.turn_off
-  - action: scene.turn_on
-    target:
-      entity_id: scene.before_leaving
   mode: single
 - id: living_room_switch_toggle
   alias: 'Switch: Living room toggle + all others off'

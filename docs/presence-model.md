@@ -57,7 +57,7 @@ User presses a physical switch / UI toggle / voice command. `manual_light_overri
 
 ### R5 — Leave home
 
-`person.antek → not_home for 2 min` (tracker now only uses `device_tracker.iphone_12` after the UniFi-only fix). Snapshots all lights into `scene.before_leaving`, turns all off, clears suppress flags.
+`person.antek → not_home for 2 min` (tracker now only uses `device_tracker.iphone_12` after the UniFi-only fix). Turns all tracked lights off and clears suppress flags. No snapshot/restore — on return, room motion triggers Layer 1 normally and lights come on for whichever room you enter.
 
 ## Scenario matrix (read this and tell me if any row is wrong)
 
@@ -71,7 +71,7 @@ User presses a physical switch / UI toggle / voice command. `manual_light_overri
 | 6 | LR → laundry → hang in hallway 3 min → LR | LR off 30 s after entering laundry; R2 fires at hallway‑60s → laundry off, current_room=none; LR back on when you re‑enter | R1, R2 |
 | 7 | **LR → hallway only, dwell 2 min, return to LR** | LR off ~60 s into hallway dwell; `current_room=none`; on return, LR motion fires and LR comes back on, `current_room=living_room` | **R2** (the new rule) |
 | 8 | LR → kitchen (via hallway) → kitchen dwell 30 min → LR | LR stays on the whole time. Kitchen is not tracked; no rule turns off LR. | No rule fires (known limitation) |
-| 9 | User turns off LR via Hue dimmer while in LR | LR off; `suppress_living_room_auto_light = on`; LR motion won't re-on until either user turns it on again (clears flag) or the flag is cleared on arrive-home | R4 |
+| 9 | User turns off LR via Hue dimmer while in LR | LR off; `suppress_living_room_auto_light = on`; LR motion won't re-on until user turns it on again (which clears the flag) or R5 clears it on leave-home | R4 |
 | 10 | LR motion sensor blips off for 0.2 s while user on couch | LR stays on (no rule samples motion-off under the refactor) | No rule fires |
 | 11 | Cat walks through hallway briefly (< 60 s) while user on bed | LR stays on (R2's `for: 60` threshold not met) | No rule fires |
 | 12 | **Cat hangs out in hallway > 60 s** while user on bed | LR would turn off (false positive). Known edge case under single-person assumption violation. | R2 false positive |
