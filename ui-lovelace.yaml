@@ -4,6 +4,20 @@ views:
     icon: mdi:view-dashboard
     type: sections
     max_columns: 4
+    badges:
+      - type: entity
+        entity: sensor.current_location
+        name: Location
+        color: blue
+      - type: entity
+        entity: sensor.aranet4_3361b_temperature
+        name: Indoor
+        icon: mdi:thermometer
+        color: orange
+      - type: entity
+        entity: sensor.aranet4_3361b_carbon_dioxide
+        name: CO2
+        icon: mdi:molecule-co2
     sections:
       # Lights
       - type: grid
@@ -72,6 +86,7 @@ views:
             cards:
               - type: custom:mushroom-light-card
                 entity: light.laundry_room_light
+                name: Laundry Room
                 use_light_color: false
                 show_brightness_control: false
                 fill_container: false
@@ -79,11 +94,13 @@ views:
                 layout: vertical
               - type: custom:mushroom-light-card
                 entity: light.hallway_light
+                name: Hallway
                 layout: vertical
                 show_brightness_control: false
                 icon: mdi:coat-rack
               - type: custom:mushroom-light-card
                 entity: light.bathroom_light
+                name: Bathroom
                 fill_container: false
                 show_brightness_control: false
                 collapsible_controls: false
@@ -91,6 +108,48 @@ views:
                 use_light_color: false
                 layout: vertical
                 icon: mdi:bathtub
+
+      # Conditions
+      - type: grid
+        cards:
+          - type: heading
+            heading_style: title
+            heading: Conditions
+            icon: mdi:thermometer
+          - type: custom:mushroom-template-card
+            primary: Temperature
+            secondary: "{{ states('sensor.aranet4_3361b_temperature') }}°C"
+            icon: mdi:thermometer
+            icon_color: orange
+          - type: custom:mushroom-template-card
+            primary: Humidity
+            secondary: "{{ states('sensor.aranet4_3361b_humidity') }}%"
+            icon: mdi:water-percent
+            icon_color: |
+              {% set h = states('sensor.aranet4_3361b_humidity') | int(0) %}
+              {% if h < 30 or h > 60 %}orange{% else %}blue{% endif %}
+          - type: custom:mini-graph-card
+            name: Indoor Temperature (24h)
+            hours_to_show: 24
+            animate: true
+            line_width: 2
+            entities:
+              - entity: sensor.aranet4_3361b_temperature
+                color: "#f97316"
+          - type: custom:mini-graph-card
+            name: Indoor CO2 (24h)
+            icon: mdi:molecule-co2
+            hours_to_show: 24
+            animate: true
+            entities:
+              - entity: sensor.aranet4_3361b_carbon_dioxide
+            color_thresholds:
+              - value: 400
+                color: "#22c55e"
+              - value: 1000
+                color: "#eab308"
+              - value: 1400
+                color: "#ef4444"
 
       # Vacuum
       - type: grid
@@ -111,6 +170,22 @@ views:
                       Empty
                     {% endif %}
                   subtitle: Bin Status
+          - type: entities
+            title: Maintenance
+            show_header_toggle: false
+            entities:
+              - entity: sensor.barnaba_battery
+                name: Battery
+              - entity: sensor.barnaba_total_missions
+                name: Total Missions
+              - entity: sensor.barnaba_successful_missions
+                name: Successful
+              - entity: sensor.barnaba_failed_missions
+                name: Failed
+              - entity: sensor.barnaba_average_mission_time
+                name: Avg Mission Time
+              - entity: sensor.barnaba_total_cleaning_time
+                name: Total Runtime
 
       # Automations
       - type: grid
@@ -129,10 +204,6 @@ views:
               - vacuum
             exclude:
               - light.living_room
-          - type: entities
-            show_header_toggle: false
-            entities:
-              - entity: automation.vacuum_bin_full_notification
 
       # Purifiers
       - type: grid
@@ -166,37 +237,21 @@ views:
             aqi:
               entity_id: sensor.zhimi_mb5_ab82_pm25_density
               unit: ug/m3
-          - type: custom:purifier-card
-            entity: fan.xiaomi_cpa4_5552_air_purifier
-            stats:
-              - entity_id: sensor.xiaomi_cpa4_5552_filter_life_level_2
-                unit: "%"
-                subtitle: Filter Remaining
-              - entity_id: sensor.xiaomi_cpa4_5552_filter_left_time
-                unit: days
-                subtitle: Filter Life
-            aqi:
-              entity_id: sensor.xiaomi_cpa4_5552_pm25_density_2
-              unit: ug/m3
-          - type: custom:purifier-card
-            entity: fan.xiaomi_cpa4_5552_air_purifier
-            stats:
-              - entity_id: sensor.xiaomi_cpa4_5552_filter_life_level
-                unit: "%"
-                subtitle: Filter Remaining
-              - entity_id: sensor.xiaomi_cpa4_5552_filter_left_time
-                unit: days
-                subtitle: Filter Life
-            shortcuts:
-              - name: Sleep
-                icon: mdi:weather-night
-                preset_mode: Sleep
-              - name: Auto
-                icon: mdi:brightness-auto
-                preset_mode: Auto
-            aqi:
-              entity_id: sensor.xiaomi_cpa4_5552_pm25_density
-              unit: ug/m3
+          - type: custom:mini-graph-card
+            name: PM2.5 (24h)
+            icon: mdi:blur
+            hours_to_show: 24
+            animate: true
+            entities:
+              - entity: sensor.zhimi_mb5_ab82_pm25_density
+                color: "#06b6d4"
+            color_thresholds:
+              - value: 0
+                color: "#22c55e"
+              - value: 12
+                color: "#eab308"
+              - value: 35
+                color: "#ef4444"
 
       # Printer & Car
       - type: grid
@@ -360,6 +415,55 @@ views:
                   - type: custom:mushroom-update-card
                     entity: update.u7_pro
 
+      # Internet
+      - type: grid
+        cards:
+          - type: heading
+            heading: Internet
+            heading_style: title
+            icon: mdi:web
+          - type: custom:mini-graph-card
+            name: WAN Latency
+            icon: mdi:lan-connect
+            hours_to_show: 6
+            animate: true
+            entities:
+              - entity: sensor.ucg_ultra_cloudflare_wan_latency
+                name: Cloudflare
+                color: "#f97316"
+              - entity: sensor.ucg_ultra_google_wan_latency
+                name: Google
+                color: "#06b6d4"
+              - entity: sensor.ucg_ultra_microsoft_wan_latency
+                name: Microsoft
+                color: "#22c55e"
+
+  # ── Energy ─────────────────────────────────────────────────
+  - title: Energy
+    icon: mdi:transmission-tower
+    type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Grid Carbon Intensity
+            heading_style: title
+            icon: mdi:molecule-co2
+          - type: custom:mini-graph-card
+            name: CO2 Intensity (24h)
+            icon: mdi:molecule-co2
+            hours_to_show: 24
+            animate: true
+            entities:
+              - entity: sensor.electricity_maps_co2_intensity
+            color_thresholds:
+              - value: 0
+                color: "#22c55e"
+              - value: 200
+                color: "#eab308"
+              - value: 400
+                color: "#ef4444"
+
   # ── System ─────────────────────────────────────────────────
   - title: System
     icon: mdi:memory
@@ -427,6 +531,31 @@ views:
                     entity: update.hacs_update
                     name: HACS
 
+      # Batteries
+      - type: grid
+        cards:
+          - type: heading
+            heading: Batteries
+            heading_style: title
+            icon: mdi:battery-alert
+          - type: entities
+            show_header_toggle: false
+            entities:
+              - entity: sensor.aranet4_3361b_battery
+                name: Aranet4
+              - entity: sensor.living_room_motion_battery
+                name: Living Room Motion
+              - entity: sensor.hallway_motion_battery
+                name: Hallway Motion
+              - entity: sensor.bathroom_motion_battery
+                name: Bathroom Motion
+              - entity: sensor.laundry_room_motion_battery
+                name: Laundry Room Motion
+              - entity: sensor.living_room_switch_battery
+                name: Living Room Switch
+              - entity: sensor.barnaba_battery
+                name: Vacuum
+
   # ── Presence Debug ────────────────────────────────────────
   - title: Presence
     icon: mdi:motion-sensor
@@ -440,33 +569,43 @@ views:
             icon: mdi:map-marker
           - type: entities
             entities:
+              - entity: input_boolean.presence_enabled
+                name: Presence-based lighting
               - entity: input_select.current_room
                 name: Current room
               - entity: person.antek
                 name: Person
               - entity: input_number.presence_grace_seconds
                 name: Grace seconds
-              - entity: input_boolean.suppress_living_room_auto_light
-                name: Suppress LR
-              - entity: input_boolean.suppress_bathroom_auto_light
-                name: Suppress bathroom
-              - entity: input_boolean.suppress_laundry_room_auto_light
-                name: Suppress laundry
 
       - type: grid
         cards:
           - type: heading
-            heading: Motion sensors
+            heading: Rooms
             heading_style: title
             icon: mdi:walk
           - type: markdown
             content: |
-              | Sensor | State | Seconds in state |
-              |---|---|---|
-              | Living Room | {{ states('binary_sensor.living_room_motion_occupancy') }} | {{ (now() - states.binary_sensor.living_room_motion_occupancy.last_changed).total_seconds() | int }} s |
-              | Hallway | {{ states('binary_sensor.hallway_motion_occupancy') }} | {{ (now() - states.binary_sensor.hallway_motion_occupancy.last_changed).total_seconds() | int }} s |
-              | Bathroom | {{ states('binary_sensor.bathroom_motion_occupancy') }} | {{ (now() - states.binary_sensor.bathroom_motion_occupancy.last_changed).total_seconds() | int }} s |
-              | Laundry Room | {{ states('binary_sensor.laundry_room_motion_occupancy') }} | {{ (now() - states.binary_sensor.laundry_room_motion_occupancy.last_changed).total_seconds() | int }} s |
+              | Room | Motion | Light | Last change |
+              |---|---|---|---|
+              | Living Room | {{ states('binary_sensor.living_room_motion_occupancy') }} | {{ states('light.living_room') }} | {{ (now() - states.binary_sensor.living_room_motion_occupancy.last_changed).total_seconds() | int }} s |
+              | Hallway | {{ states('binary_sensor.hallway_motion_occupancy') }} | {{ states('light.hallway_light') }} | {{ (now() - states.binary_sensor.hallway_motion_occupancy.last_changed).total_seconds() | int }} s |
+              | Bathroom | {{ states('binary_sensor.bathroom_motion_occupancy') }} | {{ states('light.bathroom_light') }} | {{ (now() - states.binary_sensor.bathroom_motion_occupancy.last_changed).total_seconds() | int }} s |
+              | Laundry Room | {{ states('binary_sensor.laundry_room_motion_occupancy') }} | {{ states('light.laundry_room_light') }} | {{ (now() - states.binary_sensor.laundry_room_motion_occupancy.last_changed).total_seconds() | int }} s |
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Occupancy timeline (24h)
+            heading_style: title
+            icon: mdi:chart-timeline-variant
+          - type: history-graph
+            hours_to_show: 24
+            entities:
+              - binary_sensor.living_room_motion_occupancy
+              - binary_sensor.hallway_motion_occupancy
+              - binary_sensor.bathroom_motion_occupancy
+              - binary_sensor.laundry_room_motion_occupancy
 
       - type: grid
         cards:
@@ -476,13 +615,33 @@ views:
             icon: mdi:timer-cog
           - type: markdown
             content: |
-              **R2 (hallway dwell turnoff)** — fires when hallway motion has been `on` for ≥ 60 s.
+              {% if is_state('input_boolean.presence_enabled', 'off') %}
+              **Presence-based lighting is OFF.** No rules will fire.
+              {% else %}
+              {% set grace = states('input_number.presence_grace_seconds')|float(180)|int %}
+              {% set current = states('input_select.current_room') %}
               {% set hallway_state = states('binary_sensor.hallway_motion_occupancy') %}
               {% set hallway_secs = (now() - states.binary_sensor.hallway_motion_occupancy.last_changed).total_seconds() | int %}
-              {% if hallway_state == 'on' %}
-              Hallway has been `on` for **{{ hallway_secs }} s** → {% if hallway_secs >= 60 %}would fire now{% else %}fires in **{{ 60 - hallway_secs }} s** if motion stays on{% endif %}.
+              {% set current_age = (now() - states.input_select.current_room.last_changed).total_seconds() | int %}
+              {% set rooms_quiet = is_state('binary_sensor.hallway_motion_occupancy', 'on')
+                                   and is_state('binary_sensor.living_room_motion_occupancy', 'off')
+                                   and is_state('binary_sensor.bathroom_motion_occupancy', 'off')
+                                   and is_state('binary_sensor.laundry_room_motion_occupancy', 'off') %}
+
+              **Layer 1b (cleanup)** — fires when `current_room` has been a tracked room for ≥ {{ grace }} s.
+              {% if current in ['living_room', 'bathroom', 'laundry_room'] %}
+              `current_room` = `{{ current }}` for **{{ current_age }} s** → {% if current_age >= grace %}would fire now{% else %}fires in **{{ grace - current_age }} s**{% endif %}.
               {% else %}
-              Hallway is `off`; rule disarmed.
+              `current_room` = `{{ current }}`; rule disarmed.
               {% endif %}
 
-              No timeout-based turnoff exists by design. Lights in the current room stay on as long as you're in the flat; R1 (room transition) and R5 (leave home) are the only other turnoff signals.
+              **R2 (hallway dwell)** — fires when hallway motion is `on` AND every tracked-room motion is `off` for ≥ 90 s.
+              {% if rooms_quiet %}
+              Hallway-only for **{{ hallway_secs }} s** → {% if hallway_secs >= 90 %}would fire now{% else %}fires in **{{ 90 - hallway_secs }} s**{% endif %}.
+              {% else %}
+              Hallway is `{{ hallway_state }}` and tracked-room motion not all `off`; rule disarmed.
+              {% endif %}
+
+              **R5 (leave home)** — fires when `person.antek` is `not_home` for ≥ 2 min, OR all motion `off` for ≥ 10 min while not home.
+              Person is currently `{{ states('person.antek') }}`.
+              {% endif %}

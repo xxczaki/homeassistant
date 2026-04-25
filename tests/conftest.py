@@ -32,7 +32,6 @@ PRESENCE_AUTOMATION_IDS = {
     "room_light_on_and_track",
     "room_cleanup_after_settle",
     "hallway_dwell_turnoff",
-    "manual_light_override",
     "leave_home_lights_off",
     "hallway_light_on",
     "hallway_light_off",
