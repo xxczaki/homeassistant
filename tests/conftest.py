@@ -24,10 +24,10 @@ AUTOMATIONS_YAML = REPO_ROOT / "automations.yaml"
 PRESENCE_PACKAGE = REPO_ROOT / "packages" / "presence.yaml"
 
 # IDs of the automations that constitute the presence model. Other
-# automations in `automations.yaml` (vacuum notifications, kitchen switch,
-# push_config_on_shutdown, etc.) are intentionally excluded – their
-# dependencies (real Zigbee devices, MQTT, shell commands) aren't worth
-# stubbing for the presence tests.
+# automations in `automations.yaml` (vacuum notifications, kitchenette
+# switch, push_config_on_shutdown, etc.) are intentionally excluded –
+# their dependencies (real Zigbee devices, MQTT, shell commands) aren't
+# worth stubbing for the presence tests.
 PRESENCE_AUTOMATION_IDS = {
     "room_light_on_and_track",
     "room_cleanup_after_settle",
@@ -44,7 +44,7 @@ LIGHTS = (
     "light.hallway_light",
     # Group members + the IKEA strip – leave_home_lights_off targets them,
     # and manual_light_override would error if they don't exist.
-    "light.kitchen_light",
+    "light.kitchenette_light",
     "light.bedroom_light",
     "light.kitchenette_light_strip",
 )

@@ -5,8 +5,7 @@ Two trigger paths, OR-conditioned:
   2. all motion sensors off for 10 minutes AND person.antek != 'home'
      (fallback for when the tracker mis-reports).
 
-On either path: every tracked light off, current_room → none, all
-suppress flags cleared.
+On either path: every tracked light off, current_room → none.
 """
 
 from .helpers import advance, current_room, light, motion

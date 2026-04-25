@@ -18,6 +18,7 @@ advanced:
 frontend:
   enabled: true
   port: 8099
+permit_join: false
 homeassistant:
   enabled: true
 devices:
@@ -26,7 +27,7 @@ devices:
   '0x001788010b9da96f':
     friendly_name: Hallway Light
   '0x001788010b9d596e':
-    friendly_name: Kitchen Light
+    friendly_name: Kitchenette Light
   '0x0017880109aedc70':
     friendly_name: Bedroom Light
   '0x0017880109aedb1d':
@@ -44,4 +45,5 @@ devices:
   '0x58263afffe4681f1':
     friendly_name: Kitchenette Light Strip
   '0xf082c0fffe4db2e4':
-    friendly_name: Kitchen Switch
+    friendly_name: Kitchenette Switch
+    state_action: true

@@ -12,7 +12,7 @@ light:
   - platform: group
     name: Living Room
     entities:
-      - light.kitchen_light
+      - light.kitchenette_light
       - light.bedroom_light
 
 automation: !include automations.yaml

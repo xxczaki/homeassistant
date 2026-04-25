@@ -38,7 +38,7 @@ views:
                 tap_action:
                   action: toggle
               - type: state-icon
-                entity: light.kitchen_light
+                entity: light.kitchenette_light
                 style:
                   left: "43%"
                   top: "40%"
