@@ -14,7 +14,7 @@ input_number:
     name: Minimum light on
     min: 20
     max: 600
-    step: 10
+    step: 5
     initial: 180
     mode: slider
     unit_of_measurement: s
@@ -36,3 +36,24 @@ input_select:
       - bathroom
       - laundry_room
     icon: mdi:room-service
+
+template:
+  - sensor:
+      - name: Current Location
+        unique_id: current_location
+        state: >
+          {% set p = states('person.antek') %}
+          {% if p == 'home' %}
+            {% set room = states('input_select.current_room') %}
+            {% if room in ['none', 'unknown', 'unavailable'] %}
+              Home
+            {% else %}
+              {{ room | replace('_', ' ') | title }}
+            {% endif %}
+          {% elif p == 'not_home' %}
+            Away
+          {% else %}
+            {{ p | title }}
+          {% endif %}
+        icon: >
+          {% if states('person.antek') == 'home' %}mdi:home-account{% else %}mdi:walk{% endif %}

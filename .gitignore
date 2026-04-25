@@ -41,3 +41,9 @@ zigbee2mqtt/state.json
 
 # ESPHome build artifacts (keep device configs)
 esphome/.esphome/
+
+# Python (tests/) — keep uv.lock; ignore env + caches
+tests/.venv/
+.pytest_cache/
+.python-version
+

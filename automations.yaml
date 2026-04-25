@@ -72,7 +72,7 @@
     state: 'on'
   actions:
   - variables:
-      min_on: "{{ states('input_number.presence_grace_seconds')|int(30) }}"
+      min_on: "{{ states('input_number.presence_grace_seconds')|float(30)|int }}"
       hallway_on_for: >-
         {{ (as_timestamp(now()) - as_timestamp(states.light.hallway_light.last_changed)) | int(0) }}
       remaining: "{{ [0, (min_on - hallway_on_for)] | max }}"
@@ -150,6 +150,18 @@
     within the same room (LR PIR pirOToUDelay=5s causes off->on every few
     seconds while user sits) don't restart the timer - only entering a
     DIFFERENT room does.
+  # State trigger fires when current_room transitions into one of the
+  # tracked rooms and stays there for grace. HA's `to: [list]` with for:
+  # has two known quirks:
+  #   1. when state moves between two values that both match to:, the
+  #      timer doesn't reset — it fires with `trigger.to_state` set to
+  #      the FIRST match, not the current value.
+  #   2. per-room triggers (one per to: value) can race: an old timer
+  #      may not cancel cleanly when state moves to a different to:
+  #      value, causing two stale fires.
+  # Mitigation: use a single list-form trigger and read current_room
+  # *live* in the action body. The `for:` semantics still wait for the
+  # entity to remain inside the to: set, which is what we want.
   triggers:
   - trigger: state
     entity_id: input_select.current_room
@@ -158,10 +170,10 @@
     - bathroom
     - laundry_room
     for:
-      seconds: "{{ states('input_number.presence_grace_seconds')|int(180) }}"
+      seconds: "{{ states('input_number.presence_grace_seconds')|float(180)|int }}"
   actions:
   - variables:
-      current: "{{ trigger.to_state.state }}"
+      current: "{{ states('input_select.current_room') }}"
       rooms:
         living_room: light.living_room
         bathroom: light.bathroom_light
