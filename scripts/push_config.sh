@@ -2,21 +2,19 @@
 set -e
 cd /config
 
-# All git ops below need the deploy key. The key lives at
-# /config/.ssh/ha_deploy_key (gitignored) so the path is reachable
-# from inside HA core's container, where shell_command runs.
-# /root/.ssh/ on the supervisor host is not visible there.
+# Deploy key under /config/.ssh (gitignored) is reachable from inside
+# HA core's container, where shell_command runs.
 export GIT_SSH_COMMAND="ssh -i /config/.ssh/ha_deploy_key -o StrictHostKeyChecking=accept-new"
 
-# Sync Z2M config into the repo and redact secrets so they never reach
-# the remote. The live file under /homeassistant keeps the real values;
-# only the repo copy is scrubbed. Done with awk (not python) because the
-# shell_command exec env is busybox sh and we want zero interpreter
-# dependencies between cp and git add.
-if [ -f /homeassistant/zigbee2mqtt/configuration.yaml ]; then
-  mkdir -p zigbee2mqtt
-  cp /homeassistant/zigbee2mqtt/configuration.yaml zigbee2mqtt/configuration.yaml.tmp
-  awk '
+# Stage the Z2M config in redacted form without touching the live file.
+# /config and /homeassistant are the same mount on HA OS, so any
+# in-place rewrite strips the real network_key / password that Z2M
+# needs at runtime. Trick: pipe the awk-redacted bytes into
+# `git hash-object -w --stdin` (writes a blob to .git/objects, prints
+# its SHA) and stage that SHA at the file's path via `update-index
+# --cacheinfo`. The working tree is never modified.
+if [ -f zigbee2mqtt/configuration.yaml ]; then
+  REDACTED_SHA=$(awk '
     BEGIN { in_block = 0 }
     in_block && /^[[:space:]]+- / { next }
     in_block { in_block = 0 }
@@ -35,19 +33,14 @@ if [ -f /homeassistant/zigbee2mqtt/configuration.yaml ]; then
       next
     }
     { print }
-  ' zigbee2mqtt/configuration.yaml.tmp > zigbee2mqtt/configuration.yaml
-  rm zigbee2mqtt/configuration.yaml.tmp
-fi
-
-# Sync ESPHome device configs into the repo
-if [ -d /homeassistant/esphome ]; then
-  mkdir -p esphome
-  for f in /homeassistant/esphome/*.yaml; do
-    [ -f "$f" ] && cp "$f" esphome/
-  done
+  ' zigbee2mqtt/configuration.yaml | git hash-object -w --stdin)
 fi
 
 git add -A
+if [ -n "${REDACTED_SHA:-}" ]; then
+  git update-index --add --cacheinfo 100644,"$REDACTED_SHA",zigbee2mqtt/configuration.yaml
+fi
+
 if ! git diff --cached --quiet; then
   git commit -m "Auto-commit from HA"
   git push origin main
