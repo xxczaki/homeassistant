@@ -6,6 +6,13 @@ cd /config
 # HA core's container, where shell_command runs.
 export GIT_SSH_COMMAND="ssh -i /config/.ssh/ha_deploy_key -o StrictHostKeyChecking=accept-new"
 
+# Pull origin first so the eventual push isn't rejected as non-FF when
+# the dev workflow has pushed to GitHub between shutdowns. Rebase any
+# local auto-commits on top; if rebase can't apply cleanly, abort the
+# whole script so the user notices instead of silently piling up.
+git fetch origin
+git pull --rebase origin main
+
 # Stage the Z2M config in redacted form without touching the live file.
 # /config and /homeassistant are the same mount on HA OS, so any
 # in-place rewrite strips the real network_key / password that Z2M
