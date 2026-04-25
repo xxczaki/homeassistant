@@ -1,5 +1,12 @@
 #!/bin/sh
+set -e
 cd /config
+
+# All git operations below need the deploy key. Exporting here so it
+# applies to every git invocation, not just the first in an && chain
+# (the previous `VAR=value cmd` form scoped it to add-only, which is
+# why pushes have been silently failing).
+export GIT_SSH_COMMAND="ssh -i /root/.ssh/ha_deploy_key -o StrictHostKeyChecking=accept-new"
 
 # Sync Z2M config into repo, then redact secrets so they never reach the
 # remote. The live file keeps the real values; only the repo copy is
@@ -41,8 +48,8 @@ if [ -d /homeassistant/esphome ]; then
   done
 fi
 
-GIT_SSH_COMMAND="ssh -i /root/.ssh/ha_deploy_key -o StrictHostKeyChecking=accept-new" \
-  git add -A && \
-  git diff --cached --quiet || \
-  git commit -m "Auto-commit from HA" && \
+git add -A
+if ! git diff --cached --quiet; then
+  git commit -m "Auto-commit from HA"
   git push origin main
+fi
