@@ -15,6 +15,7 @@ backups/
 
 # Secrets
 secrets.yaml
+.ssh/
 
 # HACS-managed
 custom_components/
