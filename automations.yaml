@@ -85,14 +85,12 @@
 - id: room_light_on_and_track
   alias: 'Presence: Room motion -> light on + track room (Layer 1)'
   description: >-
-    Primary room entry automation. Tracks current room, turns on room light
-    (suppress checked), waits presence_grace_seconds, then turns off every
-    tracked room that is not the live current_room (presence-based: motion-
-    off is NOT required, since current_room != room proves absence under the
-    single-occupant + hallway-transit model). Clears prev room suppress flag.
-    mode: restart so a burst of motion triggers can't overflow a parallel
-    queue (previously mode: parallel/max:3 which dropped bursty motion on
-    2026-04-23 and turned off the room the user had just re-entered).
+    On any tracked room motion, set current_room and turn on that room's
+    light (suppress checked). The grace-period cleanup of OTHER rooms is
+    handled by room_cleanup_after_settle (Layer 1b), which triggers on
+    current_room state CHANGE - so motion-on cycles within the same room
+    don't restart the cleanup timer (input_select.select_option to the
+    same value is a no-op and emits no state change).
   triggers:
   - entity_id: binary_sensor.living_room_motion_occupancy
     to: 'on'
@@ -113,15 +111,12 @@
       rooms:
         living_room:
           light: light.living_room
-          motion: binary_sensor.living_room_motion_occupancy
           suppress: input_boolean.suppress_living_room_auto_light
         bathroom:
           light: light.bathroom_light
-          motion: binary_sensor.bathroom_motion_occupancy
           suppress: input_boolean.suppress_bathroom_auto_light
         laundry_room:
           light: light.laundry_room_light
-          motion: binary_sensor.laundry_room_motion_occupancy
           suppress: input_boolean.suppress_laundry_room_auto_light
   - target:
       entity_id: input_select.current_room
@@ -137,16 +132,6 @@
       - target:
           entity_id: "{{ rooms[new_room].light }}"
         action: light.turn_on
-  - delay:
-      seconds: "{{ states('input_number.presence_grace_seconds')|int(30) }}"
-  - repeat:
-      for_each: "{{ rooms.keys() | reject('eq', new_room) | list }}"
-      sequence:
-      - condition: template
-        value_template: "{{ is_state(rooms[repeat.item].light, 'on') }}"
-      - target:
-          entity_id: "{{ rooms[repeat.item].light }}"
-        action: light.turn_off
   - choose:
     - conditions:
       - condition: template
@@ -155,7 +140,41 @@
       - target:
           entity_id: "{{ rooms[prev_room].suppress }}"
         action: input_boolean.turn_off
-  mode: restart
+  mode: single
+- id: room_cleanup_after_settle
+  alias: 'Presence: Cleanup non-current rooms after settle (Layer 1b)'
+  description: >-
+    Fires when current_room transitions to a tracked room AND stays there
+    for presence_grace_seconds. Turns off the lights of every other tracked
+    room. Decoupled from motion triggers so brief motion-on/off cycles
+    within the same room (LR PIR pirOToUDelay=5s causes off->on every few
+    seconds while user sits) don't restart the timer - only entering a
+    DIFFERENT room does.
+  triggers:
+  - trigger: state
+    entity_id: input_select.current_room
+    to:
+    - living_room
+    - bathroom
+    - laundry_room
+    for:
+      seconds: "{{ states('input_number.presence_grace_seconds')|int(180) }}"
+  actions:
+  - variables:
+      current: "{{ trigger.to_state.state }}"
+      rooms:
+        living_room: light.living_room
+        bathroom: light.bathroom_light
+        laundry_room: light.laundry_room_light
+  - repeat:
+      for_each: "{{ rooms.keys() | reject('eq', current) | list }}"
+      sequence:
+      - condition: template
+        value_template: "{{ is_state(rooms[repeat.item], 'on') }}"
+      - target:
+          entity_id: "{{ rooms[repeat.item] }}"
+        action: light.turn_off
+  mode: single
 - id: hallway_dwell_turnoff
   alias: 'Presence: Hallway dwell -> turn off current room (Layer 2)'
   description: >-
