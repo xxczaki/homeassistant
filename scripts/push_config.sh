@@ -20,7 +20,7 @@ fi
 # local auto-commits on top; if rebase can't apply cleanly, abort the
 # whole script so the user notices instead of silently piling up.
 git fetch origin
-git pull --rebase origin main
+git pull --rebase --autostash origin main
 
 # Stage the Z2M config in redacted form without touching the live file.
 # /config and /homeassistant are the same mount on HA OS, so any
