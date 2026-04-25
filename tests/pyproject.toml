@@ -1,0 +1,19 @@
+[project]
+name = "homeassistant-presence-tests"
+version = "0.1.0"
+description = "In-process pytest suite for the presence-based lighting automations."
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-homeassistant-custom-component>=0.13",
+    "pyyaml>=6.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["."]
+addopts = "-v --tb=short"
