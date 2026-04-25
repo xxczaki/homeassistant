@@ -30,7 +30,7 @@ jobs:
       - name: Pin Python from mise.toml
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.14.4"
 
       - name: Sync dependencies
         run: uv sync --locked
