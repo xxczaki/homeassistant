@@ -63,14 +63,10 @@
 - id: hallway_light_off
   alias: 'Presence: Hallway motion clear -> hallway off'
   description: >-
-    Hallway light turns off after motion has been continuously OFF for
-    60 seconds. Any motion-on within the window resets the timer, so
-    dwelling in the hallway (hanging laundry, putting on shoes) keeps
-    the light lit indefinitely as long as the PIR fires within the
-    minute. When the user truly leaves the hallway, the next 60 s of
-    silence drops it.
-    Replaces the previous min-on-then-cancel design which would turn
-    off mid-dwell once the cumulative on-time exceeded grace_seconds.
+    Off after hallway motion has been continuously OFF for 60 s. Any
+    motion-on within the window resets the timer, so dwelling (hanging
+    laundry, putting on shoes) keeps the light lit as long as the PIR
+    fires within the minute.
   triggers:
   - trigger: state
     entity_id: binary_sensor.hallway_motion_occupancy
@@ -270,7 +266,7 @@
       - light.living_room
       - light.bathroom_light
       - light.laundry_room_light
-      - light.kitchen_light
+      - light.kitchenette_light
       - light.bedroom_light
     action: light.turn_off
   - target:
@@ -333,20 +329,20 @@
   actions:
   - action: shell_command.push_config
   mode: single
-- id: kitchen_switch_toggle
-  alias: 'Switch: Kitchen switch -> sync kitchenette light strip (TRÅDFRI)'
+- id: kitchenette_switch_toggle
+  alias: 'Switch: Kitchenette switch -> sync kitchenette light strip (TRÅDFRI)'
   description: >-
     ZBMINIL2 with relay physically bypassed. Syncs the TRÅDFRI strip to the
     switch's reported state instead of toggling on every MQTT action, so
     spurious/phantom action events from the modded switch can't flip the light.
   triggers:
   - trigger: state
-    entity_id: switch.kitchen_switch
+    entity_id: switch.kitchenette_switch
     from: 'off'
     to: 'on'
     id: 'on'
   - trigger: state
-    entity_id: switch.kitchen_switch
+    entity_id: switch.kitchenette_switch
     from: 'on'
     to: 'off'
     id: 'off'

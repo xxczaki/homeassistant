@@ -2,16 +2,15 @@
 
 ## Assumptions
 
-1. **Single occupant.** Exactly one person in the flat at any time. If hallway motion fires while no tracked room shows motion, that person is in the hallway – they cannot also be in the living room.
+1. **Single occupant.** Exactly one person in the studio at any time. If hallway motion fires while no tracked room shows motion, that person is in the hallway – they cannot also be in the living room.
 2. **Hallway is the transit hub.** Every move between tracked rooms passes through the hallway.
+3. **Studio layout.** The living room is open-plan and contains the kitchenette and bedroom nook. They share a single PIR (`binary_sensor.living_room_motion_occupancy`) and a single tracked room (`living_room`).
 
 ## Tracked rooms
 
 - **Tracked** (have motion sensors, participate in `input_select.current_room`): `living_room`, `bathroom`, `laundry_room`.
 - **Transit zone** (has motion sensor, does NOT set current_room): `hallway`.
-- **Untracked** (no motion sensor): `kitchen`, `bedroom` nook (covered by `light.bedroom_light` in the LR group).
-
-Note: `light.living_room` is a _light group_ of `light.kitchen_light + light.bedroom_light`.
+- **Sub-areas of the living room** (no own PIR): kitchenette, bedroom nook. Lit by `light.kitchenette_light` (kitchenette ceiling) and `light.bedroom_light` (nook); both are members of the `light.living_room` group.
 
 ## Master kill switch
 
@@ -74,12 +73,11 @@ Intentionally absent. Pure presence: a room's light stays on as long as it's the
 | 5   | LR → bathroom, stay 30 min (toilet, reading)                 | LR off after grace; **bathroom stays on the entire 30 min regardless of motion stillness**                                                           | R1b only                                                      |
 | 6   | LR → laundry → hang in hallway 3 min → LR                    | LR off after grace once `current_room=laundry`; R2 fires after 90 s of hallway-only → laundry off, `current_room=none`; LR back on when you re-enter | R1b, R2                                                       |
 | 7   | LR → hallway only, dwell 2 min, return to LR                 | LR off ~90 s into hallway dwell; `current_room=none`; on return, LR motion fires and LR comes back on, `current_room=living_room`                    | R2                                                            |
-| 8   | LR → kitchen (via hallway) → kitchen dwell 30 min → LR       | LR stays on the whole time. Kitchen is not tracked; no rule turns off LR.                                                                            | No rule fires (known limitation)                              |
-| 9   | LR motion sensor blips off for 0.2 s while user on couch     | LR stays on (no rule samples motion-off under the model)                                                                                             | No rule fires                                                 |
-| 10  | Cat walks through hallway briefly (< 90 s) while user on bed | LR stays on (R2 threshold not met)                                                                                                                   | No rule fires                                                 |
-| 11  | Cat hangs out in hallway > 90 s while user on bed            | LR would turn off (false positive). Known edge case under single-person assumption violation.                                                        | R2 false positive                                             |
-| 12  | Hanging laundry, back-and-forth between laundry and hallway  | Laundry stays on; hallway light stays on as long as motion within 60 s; LR off after grace from laundry-entry                                        | R4, R1b                                                       |
-| 13  | Friends over, presence disabled                              | Nothing presence-related fires; lights are entirely under manual control                                                                             | Kill switch                                                   |
+| 8   | LR motion sensor blips off for 0.2 s while user on couch     | LR stays on (no rule samples motion-off under the model)                                                                                             | No rule fires                                                 |
+| 9   | Cat walks through hallway briefly (< 90 s) while user on bed | LR stays on (R2 threshold not met)                                                                                                                   | No rule fires                                                 |
+| 10  | Cat hangs out in hallway > 90 s while user on bed            | LR would turn off (false positive). Known edge case under single-person assumption violation.                                                        | R2 false positive                                             |
+| 11  | Hanging laundry, back-and-forth between laundry and hallway  | Laundry stays on; hallway light stays on as long as motion within 60 s; LR off after grace from laundry-entry                                        | R4, R1b                                                       |
+| 12  | Friends over, presence disabled                              | Nothing presence-related fires; lights are entirely under manual control                                                                             | Kill switch                                                   |
 
 ## Tuning knobs
 
