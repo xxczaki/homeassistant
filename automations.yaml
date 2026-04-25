@@ -60,28 +60,29 @@
 - id: hallway_light_off
   alias: 'Presence: Hallway motion clear -> hallway off'
   description: >-
-    Triggers on hallway motion sensor going off (~10s after last motion).
-    Fixes bug where mode:restart on current_room changes kept resetting the timer.
+    Hallway light turns off after motion has been continuously OFF for
+    60 seconds. Any motion-on within the window resets the timer, so
+    dwelling in the hallway (hanging laundry, putting on shoes) keeps
+    the light lit indefinitely as long as the PIR fires within the
+    minute. When the user truly leaves the hallway, the next 60 s of
+    silence drops it.
+    Replaces the previous min-on-then-cancel design which would turn
+    off mid-dwell once the cumulative on-time exceeded grace_seconds.
   triggers:
-  - entity_id: binary_sensor.hallway_motion_occupancy
+  - trigger: state
+    entity_id: binary_sensor.hallway_motion_occupancy
     to: 'off'
-    trigger: state
+    for:
+      seconds: 60
   conditions:
   - condition: state
     entity_id: light.hallway_light
     state: 'on'
   actions:
-  - variables:
-      min_on: "{{ states('input_number.presence_grace_seconds')|float(30)|int }}"
-      hallway_on_for: >-
-        {{ (as_timestamp(now()) - as_timestamp(states.light.hallway_light.last_changed)) | int(0) }}
-      remaining: "{{ [0, (min_on - hallway_on_for)] | max }}"
-  - delay:
-      seconds: "{{ remaining }}"
   - target:
       entity_id: light.hallway_light
     action: light.turn_off
-  mode: restart
+  mode: single
 - id: room_light_on_and_track
   alias: 'Presence: Room motion -> light on + track room (Layer 1)'
   description: >-

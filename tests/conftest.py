@@ -43,6 +43,11 @@ LIGHTS = (
     "light.bathroom_light",
     "light.laundry_room_light",
     "light.hallway_light",
+    # Group members + the IKEA strip — leave_home_lights_off targets them,
+    # and manual_light_override would error if they don't exist.
+    "light.kitchen_light",
+    "light.bedroom_light",
+    "light.kitchenette_light_strip",
 )
 
 MOTION_SENSORS = (
@@ -108,6 +113,11 @@ async def presence_hass(hass: HomeAssistant) -> HomeAssistant:
         hass.states.async_set(sensor, "off")
     for light in LIGHTS:
         hass.states.async_set(light, "off")
+
+    # Default person state to 'home' so leave_home_lights_off doesn't fire
+    # during long-running tests (3-hour blind-spot test, etc.). Tests that
+    # exercise the leave-home flow override this explicitly.
+    hass.states.async_set("person.antek", "home")
 
     # In-test light services. Mutate state on call so subsequent template
     # reads (`is_state(light.X, 'on')`) reflect what the automation just did.

@@ -12,6 +12,7 @@ because real wall time barely moves between calls).
 
 from __future__ import annotations
 
+import asyncio
 from datetime import timedelta
 
 from homeassistant.core import HomeAssistant
@@ -31,7 +32,16 @@ def reset_clock(hass: HomeAssistant) -> None:
 
 
 async def motion(hass: HomeAssistant, room: str, on: bool = True) -> None:
-    """Set a motion sensor to on/off and wait for triggers to flush.
+    """Set a motion sensor to on/off and yield once so triggers fire.
+
+    `await hass.async_block_till_done()` would also wait for any
+    `async_call_later` callbacks scheduled by automation `delay:` steps
+    — that's real wall-time, not virtual, so a `delay: 45` blocks the
+    test for 45 s. We yield with `asyncio.sleep(0)` instead, which lets
+    the state-change event propagate to listeners (and triggers run
+    their synchronous prelude) but doesn't await scheduled callbacks.
+    The next `advance()` call will pump virtual time and let those
+    pending delays elapse.
 
     Accepts either a short room name ("bathroom") or a full entity_id
     ("binary_sensor.bathroom_motion_occupancy").
@@ -39,7 +49,7 @@ async def motion(hass: HomeAssistant, room: str, on: bool = True) -> None:
     if not room.startswith("binary_sensor."):
         room = f"binary_sensor.{room}_motion_occupancy"
     hass.states.async_set(room, "on" if on else "off")
-    await hass.async_block_till_done()
+    await asyncio.sleep(0)
 
 
 async def advance(hass: HomeAssistant, *, seconds: int) -> None:
