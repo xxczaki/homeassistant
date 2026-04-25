@@ -46,4 +46,5 @@ esphome/.esphome/
 tests/.venv/
 .pytest_cache/
 .python-version
+!tests/uv.lock
 
