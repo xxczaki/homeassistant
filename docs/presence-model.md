@@ -14,76 +14,87 @@
 
 Note: `light.living_room` is a *light group* of `light.kitchen_light + light.bedroom_light` — both Hue bulbs, neither of which is the IKEA TRÅDFRI strip.
 
+## Master kill switch
+
+`input_boolean.presence_enabled` (default ON). Every presence automation has it as a `condition:` — when off, motion does nothing, hallway light doesn't react, no Layer 1b cleanup, no R2 dwell, no R5 leave-home. Manual control via the Hue dimmer / app continues to work because the automations only block their *own* effects, never the user's.
+
+Use case: guests over, hosting, anything where the model would mis-interpret traffic patterns.
+
 ## State model
 
 | Entity | Purpose |
 |---|---|
 | `input_select.current_room` | The tracked room the user is currently in. Options: `none`, `living_room`, `bathroom`, `laundry_room`. |
-| `input_boolean.suppress_<room>_auto_light` | Per-room flag. When `on`, motion won't auto-turn-on the room's light. Set by `manual_light_override` when the user manually turns off a light; cleared when the light is turned on (by any path). |
+| `input_boolean.presence_enabled` | Master kill switch (above). |
+| `input_number.presence_grace_seconds` | Layer 1b grace period (seconds). |
 
-## Turn-on rule (unchanged)
+## Turn-on rule
 
-A room's light turns on when **its** motion sensor fires `on` AND **its** suppress flag is `off`. Automation: `room_light_on_and_track` (Layer 1), trigger half.
+A room's light turns on when **its** motion sensor fires `on`, AND `presence_enabled` is `on`. Automation: `room_light_on_and_track` (Layer 1).
 
-## Turn-off rules (refactored)
+## Turn-off rules
 
-A room's light turns off when **any** of the following happens:
+A room's light turns off when **any** of the following happens (and `presence_enabled` is `on`):
 
-### R1 — Room transition (Layer 1)
+### R1 — Room transition (Layer 1 trigger half)
 
-**Trigger**: a tracked room's motion fires `on`.
+A different room's motion fires → `current_room` flips → Layer 1b's grace timer arms with the new value.
 
-**Action**: set `current_room` to that room; turn the room's light on; wait `presence_grace_seconds`; then for every tracked room ≠ the live `current_room`, turn its light off. **Unconditionally** — no longer gated on "motion is off in the other room." The single-occupant + hallway-transit assumptions mean current_room is authoritative: if you're in room X, you're not in rooms Y or Z.
+### R1b — Cleanup after settle (Layer 1b)
 
-Why the grace: lets a quick return re-commit `current_room` so the wrong room isn't turned off. If you step into the bathroom then back into LR within 30 s, by the time the bathroom's scheduled turnoff evaluates, `current_room` has already flipped back to `living_room` and bathroom will be the one turned off instead.
+**Trigger**: `input_select.current_room` has been a tracked room (LR / bathroom / laundry) continuously for `presence_grace_seconds`.
 
-### R2 — Hallway dwell (new Layer 2)
+**Action**: turn off every other tracked room's light. Reads `current_room` *live* in the action body so it always cleans the right rooms even when state has moved between tracked values during the wait.
 
-**Trigger**: `binary_sensor.hallway_motion_occupancy` has been `on` continuously for 60 s.
+### R2 — Hallway dwell
 
-**Action**: turn off whatever `current_room` points to; reset `current_room` to `none`.
+**Trigger**: hallway motion `on` AND every tracked-room motion `off` continuously for 90 s.
 
-Rationale: continuous hallway motion for 60 s means the user is *in* the hallway (hanging laundry, putting on shoes, etc.). Under the single-person assumption, they cannot simultaneously be in any tracked room. The 60 s threshold filters out normal transit (walking through in a few seconds) and phantom blips.
-
-This replaces the old `hallway_quick_room_turnoff` (which fired on any 30 s of hallway motion and was responsible for the 22:15:19 bug on 2026‑04‑22).
+**Action**: turn off whatever `current_room` points to; reset to `none`.
 
 ### R3 — (removed)
 
-Intentionally absent. Pure presence: a room's light stays on as long as it's the `current_room`. Sitting still (toilet use, reading on the bed, folding laundry) is not grounds for turning off the light. Turnoff is driven only by R1 (you entered another room), R2 (you're dwelling in the hallway), or R5 (you left the house).
+Intentionally absent. Pure presence: a room's light stays on as long as it's the `current_room`. Sitting still (toilet use, reading on the bed, folding laundry) is not grounds for turning off the light.
 
-### R4 — Manual
+### R4 — Hallway light follower
 
-User presses a physical switch / UI toggle / voice command. `manual_light_override` captures this: if the light goes `off` while the room's motion is `on`, its suppress flag is set so a stale motion event doesn't immediately re-turn-on the light.
+`hallway_light_on` mirrors hallway PIR `on`. `hallway_light_off` fires after hallway motion has been continuously `off` for 60 s — any motion within the window resets the timer, so dwelling keeps the light lit.
 
 ### R5 — Leave home
 
-`person.antek → not_home for 2 min` (tracker now only uses `device_tracker.iphone_12` after the UniFi-only fix). Turns all tracked lights off and clears suppress flags. No snapshot/restore — on return, room motion triggers Layer 1 normally and lights come on for whichever room you enter.
+`person.antek → not_home` for 2 min, OR all motion `off` for 10 min while not home → all tracked lights off, `current_room=none`.
 
-## Scenario matrix (read this and tell me if any row is wrong)
+## Scenario matrix
 
 | # | You do… | Expected outcome | Which rule |
 |---|---|---|---|
-| 1 | Come home: front door → hallway → LR | Hallway light on, then LR light on; `current_room=living_room`; hallway off ~30 s after you settle in LR | Turn-on + hallway_light_off |
+| 1 | Come home: front door → hallway → LR | Hallway light on, then LR light on; `current_room=living_room`; hallway off 60 s after you settle in LR | R4 |
 | 2 | Sit on the bed in LR, still for 3 hours | LR stays on; `current_room` stays `living_room`; nothing else fires | No rule fires |
 | 3 | LR → hallway (grab mail) → LR, total 20 s | LR stays on throughout; `current_room` stays `living_room` | No rule fires |
-| 4 | LR → bathroom → LR, total 30 s (quick use) | Bathroom on during visit; LR stays on | R1 scheduled but current_room flips back → R1 turns off bathroom, not LR |
-| 5 | LR → bathroom, stay 30 min (toilet, reading, etc.) | LR off 30 s after entering bathroom; **bathroom stays on the entire 30 min regardless of motion stillness** | R1 only |
-| 6 | LR → laundry → hang in hallway 3 min → LR | LR off 30 s after entering laundry; R2 fires at hallway‑60s → laundry off, current_room=none; LR back on when you re‑enter | R1, R2 |
-| 7 | **LR → hallway only, dwell 2 min, return to LR** | LR off ~60 s into hallway dwell; `current_room=none`; on return, LR motion fires and LR comes back on, `current_room=living_room` | **R2** (the new rule) |
+| 4 | LR → bathroom → LR, total 30 s (quick use) | Bathroom on during visit; LR stays on | R1 (timer re-arms on return; cleanup targets bathroom not LR) |
+| 5 | LR → bathroom, stay 30 min (toilet, reading) | LR off after grace; **bathroom stays on the entire 30 min regardless of motion stillness** | R1b only |
+| 6 | LR → laundry → hang in hallway 3 min → LR | LR off after grace once `current_room=laundry`; R2 fires after 90 s of hallway-only → laundry off, `current_room=none`; LR back on when you re-enter | R1b, R2 |
+| 7 | LR → hallway only, dwell 2 min, return to LR | LR off ~90 s into hallway dwell; `current_room=none`; on return, LR motion fires and LR comes back on, `current_room=living_room` | R2 |
 | 8 | LR → kitchen (via hallway) → kitchen dwell 30 min → LR | LR stays on the whole time. Kitchen is not tracked; no rule turns off LR. | No rule fires (known limitation) |
-| 9 | User turns off LR via Hue dimmer while in LR | LR off; `suppress_living_room_auto_light = on`; LR motion won't re-on until user turns it on again (which clears the flag) or R5 clears it on leave-home | R4 |
-| 10 | LR motion sensor blips off for 0.2 s while user on couch | LR stays on (no rule samples motion-off under the refactor) | No rule fires |
-| 11 | Cat walks through hallway briefly (< 60 s) while user on bed | LR stays on (R2's `for: 60` threshold not met) | No rule fires |
-| 12 | **Cat hangs out in hallway > 60 s** while user on bed | LR would turn off (false positive). Known edge case under single-person assumption violation. | R2 false positive |
+| 9 | LR motion sensor blips off for 0.2 s while user on couch | LR stays on (no rule samples motion-off under the model) | No rule fires |
+| 10 | Cat walks through hallway briefly (< 90 s) while user on bed | LR stays on (R2 threshold not met) | No rule fires |
+| 11 | Cat hangs out in hallway > 90 s while user on bed | LR would turn off (false positive). Known edge case under single-person assumption violation. | R2 false positive |
+| 12 | Hanging laundry, back-and-forth between laundry and hallway | Laundry stays on; hallway light stays on as long as motion within 60 s; LR off after grace from laundry-entry | R4, R1b |
+| 13 | Friends over, presence disabled | Nothing presence-related fires; lights are entirely under manual control | Kill switch |
 
 ## Tuning knobs
 
 | Knob | File | Default | Tradeoff |
 |---|---|---|---|
-| `presence_grace_seconds` | `packages/presence.yaml` | 30 s | Higher = more forgiving of fast returns; lower = snappier cleanup |
-| Hallway dwell threshold | `automations.yaml` R2 trigger `for:` | 60 s | Higher = less likely to trip on long transits; lower = faster LR-off when hallway dwelling |
-| Hue sensor `occupancy_timeout` (per device, in Z2M) | Z2M per-device config | LR 5 / BR 15 / HW 30 / Laundry 60 | Lower = sensor reports off faster after you stop moving. Under the pure-presence model this only affects when R1/R2 can next trigger on re-entry — no longer gates any turnoff. |
+| `presence_grace_seconds` | `packages/presence.yaml` | 180 s | Higher = brief trips don't kill the previous room; lower = snappier cleanup |
+| Hallway dwell threshold | `automations.yaml` R2 trigger `for:` | 90 s | Higher = less likely to trip on long transits; lower = faster LR-off when hallway dwelling |
+| Hallway light off threshold | `automations.yaml` `hallway_light_off` `for:` | 60 s | Higher = stays on longer between motion bursts; lower = darker hallway between events |
+| Hue sensor `occupancy_timeout` (per device, in Z2M) | Z2M per-device config | LR 5 / BR 15 / HW 30 / Laundry 60 | Lower = sensor reports off faster after you stop moving; under the pure-presence model this only affects when R1/R2 can re-trigger on re-entry — no longer gates any turnoff. |
 
 ## Live verification
 
-The dashboard gains a **Presence Debug** view. It shows: each sensor's current state, seconds since last change, `current_room`, each suppress flag, and a live "R2 would fire in N seconds" readout so you can watch the model think.
+The **Presence** dashboard view shows: master kill switch, `current_room`, sensor + light state per room, 24 h occupancy history graph, and live countdowns for R1b, R2 and R5.
+
+## Test suite
+
+Every row of the matrix has a corresponding pytest scenario in `tests/`. The suite drives an in-process Home Assistant instance against the production YAML; it runs in well under a second locally and on every push / PR via `.github/workflows/tests.yml`. Make a YAML change, see the matching test go red — that's how you know what you broke.

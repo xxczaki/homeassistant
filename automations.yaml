@@ -45,13 +45,16 @@
     default: []
   mode: single
 - id: hallway_light_on
-  alias: 'Presence: Hallway motion -> hallway on (lux gated)'
+  alias: 'Presence: Hallway motion -> hallway on'
   description: ''
   triggers:
   - entity_id: binary_sensor.hallway_motion_occupancy
     to: 'on'
     trigger: state
-  conditions: []
+  conditions:
+  - condition: state
+    entity_id: input_boolean.presence_enabled
+    state: 'on'
   actions:
   - target:
       entity_id: light.hallway_light
@@ -76,6 +79,9 @@
       seconds: 60
   conditions:
   - condition: state
+    entity_id: input_boolean.presence_enabled
+    state: 'on'
+  - condition: state
     entity_id: light.hallway_light
     state: 'on'
   actions:
@@ -86,12 +92,10 @@
 - id: room_light_on_and_track
   alias: 'Presence: Room motion -> light on + track room (Layer 1)'
   description: >-
-    On any tracked room motion, set current_room and turn on that room's
-    light (suppress checked). The grace-period cleanup of OTHER rooms is
-    handled by room_cleanup_after_settle (Layer 1b), which triggers on
-    current_room state CHANGE - so motion-on cycles within the same room
-    don't restart the cleanup timer (input_select.select_option to the
-    same value is a no-op and emits no state change).
+    On any tracked room motion (and only when input_boolean.presence_enabled
+    is on), set current_room and turn on that room's light. The grace-period
+    cleanup of OTHER rooms is handled by room_cleanup_after_settle (Layer
+    1b), which triggers on current_room state CHANGE.
   triggers:
   - entity_id: binary_sensor.living_room_motion_occupancy
     to: 'on'
@@ -105,42 +109,25 @@
     to: 'on'
     trigger: state
     id: laundry_room
+  conditions:
+  - condition: state
+    entity_id: input_boolean.presence_enabled
+    state: 'on'
   actions:
   - variables:
-      prev_room: "{{ states('input_select.current_room') }}"
       new_room: "{{ trigger.id }}"
       rooms:
-        living_room:
-          light: light.living_room
-          suppress: input_boolean.suppress_living_room_auto_light
-        bathroom:
-          light: light.bathroom_light
-          suppress: input_boolean.suppress_bathroom_auto_light
-        laundry_room:
-          light: light.laundry_room_light
-          suppress: input_boolean.suppress_laundry_room_auto_light
+        living_room: light.living_room
+        bathroom: light.bathroom_light
+        laundry_room: light.laundry_room_light
   - target:
       entity_id: input_select.current_room
     data:
       option: "{{ new_room }}"
     action: input_select.select_option
-  - choose:
-    - conditions:
-      - condition: template
-        value_template: >-
-          {{ is_state(rooms[new_room].suppress, 'off') }}
-      sequence:
-      - target:
-          entity_id: "{{ rooms[new_room].light }}"
-        action: light.turn_on
-  - choose:
-    - conditions:
-      - condition: template
-        value_template: "{{ prev_room in rooms and prev_room != new_room }}"
-      sequence:
-      - target:
-          entity_id: "{{ rooms[prev_room].suppress }}"
-        action: input_boolean.turn_off
+  - target:
+      entity_id: "{{ rooms[new_room] }}"
+    action: light.turn_on
   mode: single
 - id: room_cleanup_after_settle
   alias: 'Presence: Cleanup non-current rooms after settle (Layer 1b)'
@@ -172,6 +159,10 @@
     - laundry_room
     for:
       seconds: "{{ states('input_number.presence_grace_seconds')|float(180)|int }}"
+  conditions:
+  - condition: state
+    entity_id: input_boolean.presence_enabled
+    state: 'on'
   actions:
   - variables:
       current: "{{ states('input_select.current_room') }}"
@@ -207,6 +198,10 @@
          and is_state('binary_sensor.laundry_room_motion_occupancy', 'off') }}
     for:
       seconds: 90
+  conditions:
+  - condition: state
+    entity_id: input_boolean.presence_enabled
+    state: 'on'
   actions:
   - variables:
       current: "{{ states('input_select.current_room') }}"
@@ -228,87 +223,13 @@
           option: none
         action: input_select.select_option
   mode: single
-- id: manual_light_override
-  alias: 'Presence: Manual light override suppress management'
-  description: >-
-    Sets suppress flag when a light is turned off while motion is active (manual
-    override). Clears suppress flag when a light is turned on by any means.
-    Automations that turn off lights only do so when motion is off, so suppress
-    is only set on genuine manual intervention.
-  triggers:
-  - entity_id: light.living_room
-    to: 'off'
-    trigger: state
-    id: living_room_off
-  - entity_id: light.bathroom_light
-    to: 'off'
-    trigger: state
-    id: bathroom_off
-  - entity_id: light.laundry_room_light
-    to: 'off'
-    trigger: state
-    id: laundry_room_off
-  - entity_id: light.living_room
-    to: 'on'
-    trigger: state
-    id: living_room_on
-  - entity_id: light.bathroom_light
-    to: 'on'
-    trigger: state
-    id: bathroom_on
-  - entity_id: light.laundry_room_light
-    to: 'on'
-    trigger: state
-    id: laundry_room_on
-  actions:
-  - variables:
-      map:
-        living_room_off:
-          room: living_room
-          turned: 'off'
-        bathroom_off:
-          room: bathroom
-          turned: 'off'
-        laundry_room_off:
-          room: laundry_room
-          turned: 'off'
-        living_room_on:
-          room: living_room
-          turned: 'on'
-        bathroom_on:
-          room: bathroom
-          turned: 'on'
-        laundry_room_on:
-          room: laundry_room
-          turned: 'on'
-      room: "{{ map[trigger.id].room }}"
-      turned: "{{ map[trigger.id].turned }}"
-      suppress_entity: "{{ 'input_boolean.suppress_' ~ room ~ '_auto_light' }}"
-      motion_entity: "{{ 'binary_sensor.' ~ room ~ '_motion_occupancy' }}"
-  - choose:
-    - conditions:
-      - condition: template
-        value_template: "{{ turned == 'off' and is_state(motion_entity, 'on') }}"
-      sequence:
-      - target:
-          entity_id: "{{ suppress_entity }}"
-        action: input_boolean.turn_on
-    - conditions:
-      - condition: template
-        value_template: "{{ turned == 'on' }}"
-      sequence:
-      - target:
-          entity_id: "{{ suppress_entity }}"
-        action: input_boolean.turn_off
-  mode: parallel
-  max: 6
 - id: leave_home_lights_off
   alias: 'Presence: Leave home -> all lights off'
   description: >-
     Primary: person.antek not_home for 2 minutes (WiFi-based via UniFi).
     Fallback: all motion sensors off for 10 minutes (if person is not home).
-    Turns everything off and clears all suppress flags. No snapshot/restore -
-    on return, room motion just triggers Layer 1 normally.
+    Turns everything off. No snapshot/restore — on return, room motion
+    just triggers Layer 1 normally.
   triggers:
   - entity_id: person.antek
     to: not_home
@@ -326,6 +247,9 @@
       minutes: 10
     id: no_motion
   conditions:
+  - condition: state
+    entity_id: input_boolean.presence_enabled
+    state: 'on'
   - condition: or
     conditions:
     - condition: trigger
@@ -354,12 +278,6 @@
     data:
       option: none
     action: input_select.select_option
-  - target:
-      entity_id:
-      - input_boolean.suppress_living_room_auto_light
-      - input_boolean.suppress_bathroom_auto_light
-      - input_boolean.suppress_laundry_room_auto_light
-    action: input_boolean.turn_off
   mode: single
 - id: living_room_switch_toggle
   alias: 'Switch: Living room toggle + all others off'
