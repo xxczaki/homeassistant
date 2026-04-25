@@ -52,3 +52,7 @@ ha core restart                        # Restart HA core
 - `zigbee2mqtt/configuration.yaml` — Z2M config (secrets redacted in repo)
 - `esphome/` — ESPHome device configs
 - `scripts/push_config.sh` — Auto-commit script for HA
+
+## Style
+
+- Use en dashes (–), never em dashes (—)
