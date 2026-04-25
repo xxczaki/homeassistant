@@ -1,11 +1,11 @@
-"""DSL for writing scenarios — keeps tests reading like the matrix in
+"""DSL for writing scenarios – keeps tests reading like the matrix in
 `docs/presence-model.md`.
 
 `motion(hass, "bathroom")` is the executable form of "user enters bathroom."
 
 Virtual time: the suite anchors a per-test virtual clock at the first
 `advance()` call. Subsequent advances accumulate against that anchor,
-so 5 × `advance(seconds=10)` deterministically lands at T+50 — not at
+so 5 × `advance(seconds=10)` deterministically lands at T+50 – not at
 six independent T+10 events (which is what naive `now() + delta` does
 because real wall time barely moves between calls).
 """
@@ -36,7 +36,7 @@ async def motion(hass: HomeAssistant, room: str, on: bool = True) -> None:
 
     `await hass.async_block_till_done()` would also wait for any
     `async_call_later` callbacks scheduled by automation `delay:` steps
-    — that's real wall-time, not virtual, so a `delay: 45` blocks the
+    – that's real wall-time, not virtual, so a `delay: 45` blocks the
     test for 45 s. We yield with `asyncio.sleep(0)` instead, which lets
     the state-change event propagate to listeners (and triggers run
     their synchronous prelude) but doesn't await scheduled callbacks.

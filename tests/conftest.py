@@ -25,7 +25,7 @@ PRESENCE_PACKAGE = REPO_ROOT / "packages" / "presence.yaml"
 
 # IDs of the automations that constitute the presence model. Other
 # automations in `automations.yaml` (vacuum notifications, kitchen switch,
-# push_config_on_shutdown, etc.) are intentionally excluded — their
+# push_config_on_shutdown, etc.) are intentionally excluded – their
 # dependencies (real Zigbee devices, MQTT, shell commands) aren't worth
 # stubbing for the presence tests.
 PRESENCE_AUTOMATION_IDS = {
@@ -42,7 +42,7 @@ LIGHTS = (
     "light.bathroom_light",
     "light.laundry_room_light",
     "light.hallway_light",
-    # Group members + the IKEA strip — leave_home_lights_off targets them,
+    # Group members + the IKEA strip – leave_home_lights_off targets them,
     # and manual_light_override would error if they don't exist.
     "light.kitchen_light",
     "light.bedroom_light",
@@ -87,14 +87,14 @@ def _entity_ids(call: ServiceCall) -> list[str]:
 async def presence_hass(hass: HomeAssistant) -> HomeAssistant:
     """A hass instance with the production presence YAML loaded.
 
-    Light services are mocked so that turn_on/turn_off mutate state — the
+    Light services are mocked so that turn_on/turn_off mutate state – the
     Layer 1b cleanup template needs to read `is_state(light, 'on')` to
     decide whether to skip a turnoff, so a service that only records calls
     isn't enough.
     """
     package = _load_presence_package()
 
-    # Helper domains first — automations reference these in conditions/templates.
+    # Helper domains first – automations reference these in conditions/templates.
     assert await async_setup_component(
         hass, "input_boolean", {"input_boolean": package["input_boolean"]}
     )

@@ -1,9 +1,9 @@
 """Regression for the 2026-04-25 22:06 bug.
 
-User was hanging laundry — moving between the laundry room and the
+User was hanging laundry – moving between the laundry room and the
 hallway. Hallway PIR oscillated as they moved. The hallway light
 turned off mid-dwell because the previous `hallway_light_off` rule was
-"after total on-time exceeds min_on, any motion-off → off" — so once
+"after total on-time exceeds min_on, any motion-off → off" – so once
 the light had been on past `grace_seconds`, a single PIR drop would
 kill it even though the user was still right there.
 
@@ -52,7 +52,7 @@ async def test_brief_motion_off_within_60s_does_not_kill_light(presence_hass):
 
     await motion(hass, "hallway", on=True)
 
-    # Motion off briefly, then on again — within the 60 s window
+    # Motion off briefly, then on again – within the 60 s window
     await motion(hass, "hallway", on=False)
     await advance(hass, seconds=30)
     await motion(hass, "hallway", on=True)
