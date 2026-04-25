@@ -142,7 +142,7 @@
   # tracked rooms and stays there for grace. HA's `to: [list]` with for:
   # has two known quirks:
   #   1. when state moves between two values that both match to:, the
-  #      timer doesn't reset — it fires with `trigger.to_state` set to
+  #      timer doesn't reset – it fires with `trigger.to_state` set to
   #      the FIRST match, not the current value.
   #   2. per-room triggers (one per to: value) can race: an old timer
   #      may not cancel cleanly when state moves to a different to:
@@ -228,7 +228,7 @@
   description: >-
     Primary: person.antek not_home for 2 minutes (WiFi-based via UniFi).
     Fallback: all motion sensors off for 10 minutes (if person is not home).
-    Turns everything off. No snapshot/restore — on return, room motion
+    Turns everything off. No snapshot/restore – on return, room motion
     just triggers Layer 1 normally.
   triggers:
   - entity_id: person.antek

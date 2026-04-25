@@ -6,8 +6,8 @@ produces an off→on transition every few seconds and the cleanup of
 *other* rooms (bathroom, laundry that were on from earlier visits) never
 got to run.
 
-Layer 1b now triggers on `input_select.current_room` state CHANGE — not
-on motion — and `input_select.select_option` to the same value is a
+Layer 1b now triggers on `input_select.current_room` state CHANGE – not
+on motion – and `input_select.select_option` to the same value is a
 no-op in HA, so motion oscillation within the same room can no longer
 restart the timer. Only entering a *different* room does.
 """

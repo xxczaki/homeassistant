@@ -4,7 +4,7 @@ When OFF, every presence automation short-circuits via its `condition:
 state input_boolean.presence_enabled = on`. Motion does nothing, no
 hallway light, no current_room tracking, no Layer 1b cleanup, no R2
 dwell, no R5 leave-home. Manual control still works because the
-automations only block their *own* effects — the user can still flip
+automations only block their *own* effects – the user can still flip
 lights with the dimmer or app.
 """
 
@@ -59,7 +59,7 @@ async def test_layer_1b_cleanup_does_not_fire_when_disabled(presence_hass):
 
 async def test_leave_home_does_not_fire_when_disabled(presence_hass):
     """When presence is OFF, person.antek going not_home does not flush
-    lights — the user explicitly disabled the system."""
+    lights – the user explicitly disabled the system."""
     hass = presence_hass
     await motion(hass, "living_room", on=True)
     await _disable(hass)

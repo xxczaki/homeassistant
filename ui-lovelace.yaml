@@ -628,20 +628,20 @@ views:
                                    and is_state('binary_sensor.bathroom_motion_occupancy', 'off')
                                    and is_state('binary_sensor.laundry_room_motion_occupancy', 'off') %}
 
-              **Layer 1b (cleanup)** — fires when `current_room` has been a tracked room for ≥ {{ grace }} s.
+              **Layer 1b (cleanup)** – fires when `current_room` has been a tracked room for ≥ {{ grace }} s.
               {% if current in ['living_room', 'bathroom', 'laundry_room'] %}
               `current_room` = `{{ current }}` for **{{ current_age }} s** → {% if current_age >= grace %}would fire now{% else %}fires in **{{ grace - current_age }} s**{% endif %}.
               {% else %}
               `current_room` = `{{ current }}`; rule disarmed.
               {% endif %}
 
-              **R2 (hallway dwell)** — fires when hallway motion is `on` AND every tracked-room motion is `off` for ≥ 90 s.
+              **R2 (hallway dwell)** – fires when hallway motion is `on` AND every tracked-room motion is `off` for ≥ 90 s.
               {% if rooms_quiet %}
               Hallway-only for **{{ hallway_secs }} s** → {% if hallway_secs >= 90 %}would fire now{% else %}fires in **{{ 90 - hallway_secs }} s**{% endif %}.
               {% else %}
               Hallway is `{{ hallway_state }}` and tracked-room motion not all `off`; rule disarmed.
               {% endif %}
 
-              **R5 (leave home)** — fires when `person.antek` is `not_home` for ≥ 2 min, OR all motion `off` for ≥ 10 min while not home.
+              **R5 (leave home)** – fires when `person.antek` is `not_home` for ≥ 2 min, OR all motion `off` for ≥ 10 min while not home.
               Person is currently `{{ states('person.antek') }}`.
               {% endif %}

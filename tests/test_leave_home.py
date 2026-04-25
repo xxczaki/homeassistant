@@ -1,4 +1,4 @@
-"""Scenario R5 — leave_home_lights_off.
+"""Scenario R5 – leave_home_lights_off.
 
 Two trigger paths, OR-conditioned:
   1. person.antek transitions to 'not_home' for 2 minutes (primary).
@@ -34,7 +34,7 @@ async def test_person_not_home_for_two_min_turns_everything_off(presence_hass):
 
 async def test_no_motion_for_ten_min_with_person_away_turns_off(presence_hass):
     """The fallback path: tracker is wrong/stuck, but motion has been
-    silent for 10 min and person isn't 'home' — clean up."""
+    silent for 10 min and person isn't 'home' – clean up."""
     hass = presence_hass
 
     # Light up LR, then mark person as away
@@ -55,7 +55,7 @@ async def test_no_motion_for_ten_min_with_person_away_turns_off(presence_hass):
 
     # Wait 10 min + slack for the no-motion template trigger.
     # Real-time runtime of this advance is not great because HA processes
-    # every internal periodic task in the window — acceptable for a
+    # every internal periodic task in the window – acceptable for a
     # single regression test of the fallback path.
     await advance(hass, seconds=10 * 60 + 10)
 

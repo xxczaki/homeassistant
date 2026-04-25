@@ -1,12 +1,12 @@
 """Scenarios where the user briefly visits the hallway without committing
 to another tracked room.
 
-Row 3 — LR → hallway (grab mail) → LR.
+Row 3 – LR → hallway (grab mail) → LR.
     Hallway motion fires, but you go straight back. R2 must not fire
     because hallway motion does not stay on for 90 s, and `current_room`
     never changes (hallway is a transit zone, not tracked).
 
-Row 8 — LR → hallway → kitchen (untracked) → … → back to LR.
+Row 8 – LR → hallway → kitchen (untracked) → … → back to LR.
     From HA's perspective: brief hallway transit, then quiet (untracked
     kitchen), then transit back. Person.antek stays 'home' so the
     leave-home no-motion fallback doesn't kick in. LR remains lit through
@@ -53,7 +53,7 @@ async def test_lr_to_untracked_kitchen_via_hallway_keeps_lr_on(presence_hass):
     await advance(hass, seconds=5)
     await motion(hass, "hallway", on=False)
 
-    # Idle period in the kitchen — no sensor events. Short, just enough
+    # Idle period in the kitchen – no sensor events. Short, just enough
     # to confirm no rule fires on its own. R2's 90 s `for:` requires
     # hallway motion to *stay on* throughout, which it isn't here, so
     # no real-time-cost virtual-time advance is needed.

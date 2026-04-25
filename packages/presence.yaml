@@ -6,7 +6,7 @@ input_boolean:
     # Single kill switch for all presence automations. Turn OFF when guests
     # are over, you're hosting, or the model is otherwise getting in the
     # way. Every presence automation gates on this; nothing fires while
-    # it's off (motion, hallway, room cleanup, leave-home — all paused).
+    # it's off (motion, hallway, room cleanup, leave-home – all paused).
     # Manual light control via the Hue dimmer / app continues to work.
 
 input_number:

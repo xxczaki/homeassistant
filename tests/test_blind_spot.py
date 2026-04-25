@@ -1,12 +1,12 @@
-"""Scenarios 2 + 10 — LR sensor blind spot.
+"""Scenarios 2 + 10 – LR sensor blind spot.
 
 The Living Room PIR doesn't reliably see the user when they're on the
 bed. The presence model treats motion-off as NOT a valid turn-off
-signal for LR — only entering a different tracked room (R1), hallway
+signal for LR – only entering a different tracked room (R1), hallway
 dwell (R2), or leaving home (R5) can turn LR off.
 
-Row 2 — sit on the bed for hours: LR stays on.
-Row 10 — PIR cycles off→on briefly: LR stays on.
+Row 2 – sit on the bed for hours: LR stays on.
+Row 10 – PIR cycles off→on briefly: LR stays on.
 """
 
 from .helpers import advance, current_room, light, motion, set_grace
@@ -22,11 +22,11 @@ async def test_lr_stays_on_when_user_motionless_for_hours(presence_hass):
 
     # 5 minutes of nothing. Person is home (fixture default), so the
     # leave-home 10-minute no-motion fallback can't fire. Real "hours
-    # of stillness" is a corollary of "no rule fires" — anything longer
+    # of stillness" is a corollary of "no rule fires" – anything longer
     # only burns CI time iterating internal HA periodic tasks.
     await advance(hass, seconds=5 * 60)
 
-    # No rule fires — LR stays on, current_room stays living_room
+    # No rule fires – LR stays on, current_room stays living_room
     assert current_room(hass) == "living_room"
     assert light(hass, "living_room") == "on"
 
