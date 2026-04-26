@@ -639,12 +639,13 @@ views:
               tooltip:
                 enabled: true
                 shared: false
-                intersect: true
+                followCursor: true
                 x:
                   format: 'HH:mm'
-                y:
-                  formatter: |
-                    EVAL:function() { return 'on'; }
+              markers:
+                size: 0
+                hover:
+                  size: 6
               stroke:
                 lineCap: butt
             all_series_config:
