@@ -633,13 +633,13 @@ views:
             series:
               - entity: binary_sensor.living_room_motion_occupancy
                 name: Living Room
-                transform: "return x === 'on' ? 4 : null;"
+                transform: "return x === 'on' ? 4 : -10;"
               - entity: binary_sensor.hallway_motion_occupancy
                 name: Hallway
-                transform: "return x === 'on' ? 3 : null;"
+                transform: "return x === 'on' ? 3 : -10;"
               - entity: binary_sensor.bathroom_motion_occupancy
                 name: Bathroom
-                transform: "return x === 'on' ? 2 : null;"
+                transform: "return x === 'on' ? 2 : -10;"
               - entity: binary_sensor.laundry_room_motion_occupancy
                 name: Laundry Room
-                transform: "return x === 'on' ? 1 : null;"
+                transform: "return x === 'on' ? 1 : -10;"
