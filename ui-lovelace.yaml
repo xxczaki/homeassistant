@@ -18,6 +18,11 @@ views:
         entity: sensor.aranet4_3361b_carbon_dioxide
         name: CO2
         icon: mdi:molecule-co2
+      - type: entity
+        entity: sensor.aranet4_3361b_humidity
+        name: Humidity
+        icon: mdi:water-percent
+        color: blue
     sections:
       # Lights
       - type: grid
@@ -108,48 +113,6 @@ views:
                 use_light_color: false
                 layout: vertical
                 icon: mdi:bathtub
-
-      # Conditions
-      - type: grid
-        cards:
-          - type: heading
-            heading_style: title
-            heading: Conditions
-            icon: mdi:thermometer
-          - type: custom:mushroom-template-card
-            primary: Temperature
-            secondary: "{{ states('sensor.aranet4_3361b_temperature') }}°C"
-            icon: mdi:thermometer
-            icon_color: orange
-          - type: custom:mushroom-template-card
-            primary: Humidity
-            secondary: "{{ states('sensor.aranet4_3361b_humidity') }}%"
-            icon: mdi:water-percent
-            icon_color: |
-              {% set h = states('sensor.aranet4_3361b_humidity') | int(0) %}
-              {% if h < 30 or h > 60 %}orange{% else %}blue{% endif %}
-          - type: custom:mini-graph-card
-            name: Indoor Temperature (24h)
-            hours_to_show: 24
-            animate: true
-            line_width: 2
-            entities:
-              - entity: sensor.aranet4_3361b_temperature
-                color: "#f97316"
-          - type: custom:mini-graph-card
-            name: Indoor CO2 (24h)
-            icon: mdi:molecule-co2
-            hours_to_show: 24
-            animate: true
-            entities:
-              - entity: sensor.aranet4_3361b_carbon_dioxide
-            color_thresholds:
-              - value: 400
-                color: "#22c55e"
-              - value: 1000
-                color: "#eab308"
-              - value: 1400
-                color: "#ef4444"
 
       # Vacuum
       - type: grid
