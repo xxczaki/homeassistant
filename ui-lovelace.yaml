@@ -642,6 +642,9 @@ views:
                 followCursor: true
                 x:
                   format: 'HH:mm'
+                y:
+                  formatter: |
+                    EVAL:function() { return 'on'; }
               markers:
                 size: 0
                 hover:
