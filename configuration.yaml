@@ -74,6 +74,8 @@ lovelace:
       type: module
     - url: /hacsfiles/scheduler-card/scheduler-card.js
       type: module
+    - url: /hacsfiles/apexcharts-card/apexcharts-card.js
+      type: module
   dashboards:
     lovelace:
       mode: yaml
