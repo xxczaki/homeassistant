@@ -600,26 +600,42 @@ views:
       - type: grid
         cards:
           - type: heading
-            heading: Occupancy timeline (24h)
+            heading: Occupancy timeline (12h)
             heading_style: title
             icon: mdi:chart-timeline-variant
           - type: custom:apexcharts-card
-            graph_span: 24h
+            graph_span: 12h
             span:
               end: minute
             yaxis:
               - id: lanes
-                show: false
+                show: true
                 min: 0.5
                 max: 4.5
+                decimals: 0
+                apex_config:
+                  tickAmount: 4
+                  labels:
+                    style:
+                      colors: '#cbd5e1'
+                      fontSize: '12px'
+                    formatter: |
+                      EVAL:function(val) { const m = {1:'Laundry',2:'Bathroom',3:'Hallway',4:'Living Room'}; return m[Math.round(val)] || ''; }
             apex_config:
               chart:
-                height: 260
+                height: 280
               legend:
-                show: true
-                position: top
-              grid:
                 show: false
+              grid:
+                show: true
+                borderColor: '#334155'
+                strokeDashArray: 3
+                xaxis:
+                  lines:
+                    show: false
+                yaxis:
+                  lines:
+                    show: true
               tooltip:
                 enabled: false
               stroke:
