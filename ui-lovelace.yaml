@@ -600,11 +600,11 @@ views:
       - type: grid
         cards:
           - type: heading
-            heading: Occupancy timeline (12h)
+            heading: Occupancy timeline (8h)
             heading_style: title
             icon: mdi:chart-timeline-variant
           - type: custom:apexcharts-card
-            graph_span: 12h
+            graph_span: 8h
             span:
               end: minute
             yaxis:
