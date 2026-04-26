@@ -637,7 +637,14 @@ views:
                   lines:
                     show: true
               tooltip:
-                enabled: false
+                enabled: true
+                shared: false
+                intersect: true
+                x:
+                  format: 'HH:mm'
+                y:
+                  formatter: |
+                    EVAL:function() { return 'on'; }
               stroke:
                 lineCap: butt
             all_series_config:
