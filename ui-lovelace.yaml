@@ -600,11 +600,11 @@ views:
       - type: grid
         cards:
           - type: heading
-            heading: Occupancy timeline (8h)
+            heading: Occupancy timeline (24h)
             heading_style: title
             icon: mdi:chart-timeline-variant
           - type: custom:apexcharts-card
-            graph_span: 8h
+            graph_span: 24h
             span:
               end: minute
             yaxis:
@@ -647,7 +647,8 @@ views:
                     const t = Math.max(new Date(s.last_changed).getTime(), periodStart);
                     if (s.state === 'on') { if (onAt === null) onAt = t; }
                     else if (onAt !== null) {
-                      points.push([onAt, 4]); points.push([t, 4]); points.push([t + 1, null]);
+                      const endT = Math.max(t, onAt + 600000);
+                      points.push([onAt, 4]); points.push([endT, 4]); points.push([endT + 1, null]);
                       onAt = null;
                     }
                   }
@@ -667,7 +668,8 @@ views:
                     const t = Math.max(new Date(s.last_changed).getTime(), periodStart);
                     if (s.state === 'on') { if (onAt === null) onAt = t; }
                     else if (onAt !== null) {
-                      points.push([onAt, 3]); points.push([t, 3]); points.push([t + 1, null]);
+                      const endT = Math.max(t, onAt + 600000);
+                      points.push([onAt, 3]); points.push([endT, 3]); points.push([endT + 1, null]);
                       onAt = null;
                     }
                   }
@@ -687,7 +689,8 @@ views:
                     const t = Math.max(new Date(s.last_changed).getTime(), periodStart);
                     if (s.state === 'on') { if (onAt === null) onAt = t; }
                     else if (onAt !== null) {
-                      points.push([onAt, 2]); points.push([t, 2]); points.push([t + 1, null]);
+                      const endT = Math.max(t, onAt + 600000);
+                      points.push([onAt, 2]); points.push([endT, 2]); points.push([endT + 1, null]);
                       onAt = null;
                     }
                   }
@@ -707,7 +710,8 @@ views:
                     const t = Math.max(new Date(s.last_changed).getTime(), periodStart);
                     if (s.state === 'on') { if (onAt === null) onAt = t; }
                     else if (onAt !== null) {
-                      points.push([onAt, 1]); points.push([t, 1]); points.push([t + 1, null]);
+                      const endT = Math.max(t, onAt + 600000);
+                      points.push([onAt, 1]); points.push([endT, 1]); points.push([endT + 1, null]);
                       onAt = null;
                     }
                   }
