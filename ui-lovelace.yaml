@@ -604,6 +604,8 @@ views:
             heading_style: title
             icon: mdi:chart-timeline-variant
           - type: custom:apexcharts-card
+            experimental:
+              disable_config_validation: true
             graph_span: 24h
             all_series_config:
               type: area
