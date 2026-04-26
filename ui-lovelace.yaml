@@ -603,49 +603,44 @@ views:
             heading: Occupancy timeline (24h)
             heading_style: title
             icon: mdi:chart-timeline-variant
-          - type: history-graph
-            hours_to_show: 24
-            entities:
-              - binary_sensor.living_room_motion_occupancy
-              - binary_sensor.hallway_motion_occupancy
-              - binary_sensor.bathroom_motion_occupancy
-              - binary_sensor.laundry_room_motion_occupancy
-
-      - type: grid
-        cards:
-          - type: heading
-            heading: Rule evaluations
-            heading_style: title
-            icon: mdi:timer-cog
-          - type: markdown
-            content: |
-              {% if is_state('input_boolean.presence_enabled', 'off') %}
-              **Presence-based lighting is OFF.** No rules will fire.
-              {% else %}
-              {% set grace = states('input_number.presence_grace_seconds')|float(180)|int %}
-              {% set current = states('input_select.current_room') %}
-              {% set hallway_state = states('binary_sensor.hallway_motion_occupancy') %}
-              {% set hallway_secs = (now() - states.binary_sensor.hallway_motion_occupancy.last_changed).total_seconds() | int %}
-              {% set current_age = (now() - states.input_select.current_room.last_changed).total_seconds() | int %}
-              {% set rooms_quiet = is_state('binary_sensor.hallway_motion_occupancy', 'on')
-                                   and is_state('binary_sensor.living_room_motion_occupancy', 'off')
-                                   and is_state('binary_sensor.bathroom_motion_occupancy', 'off')
-                                   and is_state('binary_sensor.laundry_room_motion_occupancy', 'off') %}
-
-              **Layer 1b (cleanup)** – fires when `current_room` has been a tracked room for ≥ {{ grace }} s.
-              {% if current in ['living_room', 'bathroom', 'laundry_room'] %}
-              `current_room` = `{{ current }}` for **{{ current_age }} s** → {% if current_age >= grace %}would fire now{% else %}fires in **{{ grace - current_age }} s**{% endif %}.
-              {% else %}
-              `current_room` = `{{ current }}`; rule disarmed.
-              {% endif %}
-
-              **R2 (hallway dwell)** – fires when hallway motion is `on` AND every tracked-room motion is `off` for ≥ 90 s.
-              {% if rooms_quiet %}
-              Hallway-only for **{{ hallway_secs }} s** → {% if hallway_secs >= 90 %}would fire now{% else %}fires in **{{ 90 - hallway_secs }} s**{% endif %}.
-              {% else %}
-              Hallway is `{{ hallway_state }}` and tracked-room motion not all `off`; rule disarmed.
-              {% endif %}
-
-              **R5 (leave home)** – fires when `person.antek` is `not_home` for ≥ 2 min, OR all motion `off` for ≥ 10 min while not home.
-              Person is currently `{{ states('person.antek') }}`.
-              {% endif %}
+          - type: custom:apexcharts-card
+            header:
+              show: false
+            graph_span: 24h
+            span:
+              end: minute
+            apex_config:
+              chart:
+                height: 220
+                stacked: true
+              legend:
+                show: true
+                position: top
+              yaxis:
+                show: false
+                min: 0
+                max: 4
+              grid:
+                show: false
+              tooltip:
+                enabled: true
+                x:
+                  format: ddd HH:mm
+            all_series_config:
+              type: area
+              curve: stepline
+              stroke_width: 0
+              opacity: 0.8
+              show:
+                legend_value: false
+                in_header: false
+              transform: "return x === 'on' ? 1 : 0;"
+            series:
+              - entity: binary_sensor.living_room_motion_occupancy
+                name: Living Room
+              - entity: binary_sensor.hallway_motion_occupancy
+                name: Hallway
+              - entity: binary_sensor.bathroom_motion_occupancy
+                name: Bathroom
+              - entity: binary_sensor.laundry_room_motion_occupancy
+                name: Laundry Room
