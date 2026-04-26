@@ -604,38 +604,10 @@ views:
             heading_style: title
             icon: mdi:chart-timeline-variant
           - type: custom:apexcharts-card
-            header:
-              show: false
             graph_span: 24h
-            stacked: true
-            span:
-              end: minute
-            yaxis:
-              - id: bin
-                show: false
-                min: 0
-                max: 4
-            apex_config:
-              chart:
-                height: 220
-              legend:
-                show: true
-                position: top
-              grid:
-                show: false
-              fill:
-                type: solid
-                opacity: 0.8
-              tooltip:
-                enabled: true
             all_series_config:
               type: area
               curve: stepline
-              stroke_width: 0
-              yaxis_id: bin
-              show:
-                legend_value: false
-                in_header: false
               transform: "return x === 'on' ? 1 : 0;"
             series:
               - entity: binary_sensor.living_room_motion_occupancy
