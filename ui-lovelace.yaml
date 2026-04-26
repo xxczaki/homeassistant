@@ -610,11 +610,11 @@ views:
             yaxis:
               - id: lanes
                 show: true
-                min: 0.5
-                max: 4.5
+                min: 0
+                max: 5
                 decimals: 0
                 apex_config:
-                  tickAmount: 4
+                  tickAmount: 5
                   labels:
                     style:
                       colors: '#cbd5e1'
