@@ -603,43 +603,166 @@ views:
             heading: Occupancy timeline (24h)
             heading_style: title
             icon: mdi:chart-timeline-variant
-          - type: custom:apexcharts-card
-            graph_span: 24h
-            span:
-              end: minute
-            yaxis:
-              - id: lanes
-                show: false
-                min: 0.5
-                max: 4.5
-            apex_config:
-              chart:
-                height: 240
-              legend:
-                show: true
-                position: top
-              grid:
-                show: false
-              tooltip:
-                enabled: false
-            all_series_config:
-              type: line
-              curve: stepline
-              stroke_width: 18
-              yaxis_id: lanes
-              show:
-                legend_value: false
-                in_header: false
-            series:
-              - entity: binary_sensor.living_room_motion_occupancy
-                name: Living Room
-                transform: "return x === 'on' ? 4 : -10;"
-              - entity: binary_sensor.hallway_motion_occupancy
-                name: Hallway
-                transform: "return x === 'on' ? 3 : -10;"
-              - entity: binary_sensor.bathroom_motion_occupancy
-                name: Bathroom
-                transform: "return x === 'on' ? 2 : -10;"
-              - entity: binary_sensor.laundry_room_motion_occupancy
-                name: Laundry Room
-                transform: "return x === 'on' ? 1 : -10;"
+          - type: vertical-stack
+            cards:
+              - type: custom:apexcharts-card
+                header:
+                  show: true
+                  title: Living Room
+                  show_states: false
+                graph_span: 24h
+                span:
+                  end: minute
+                apex_config:
+                  chart:
+                    height: 70
+                  legend:
+                    show: false
+                  grid:
+                    show: false
+                  xaxis:
+                    labels:
+                      show: false
+                    axisTicks:
+                      show: false
+                    axisBorder:
+                      show: false
+                  yaxis:
+                    show: false
+                    min: 0
+                    max: 1
+                  fill:
+                    type: solid
+                    opacity: 0.85
+                  tooltip:
+                    enabled: true
+                all_series_config:
+                  type: area
+                  curve: stepline
+                  stroke_width: 0
+                  show:
+                    legend_value: false
+                    in_header: false
+                  transform: "return x === 'on' ? 1 : 0;"
+                series:
+                  - entity: binary_sensor.living_room_motion_occupancy
+                    color: '#FFA500'
+              - type: custom:apexcharts-card
+                header:
+                  show: true
+                  title: Hallway
+                  show_states: false
+                graph_span: 24h
+                span:
+                  end: minute
+                apex_config:
+                  chart:
+                    height: 70
+                  legend:
+                    show: false
+                  grid:
+                    show: false
+                  xaxis:
+                    labels:
+                      show: false
+                    axisTicks:
+                      show: false
+                    axisBorder:
+                      show: false
+                  yaxis:
+                    show: false
+                    min: 0
+                    max: 1
+                  fill:
+                    type: solid
+                    opacity: 0.85
+                  tooltip:
+                    enabled: true
+                all_series_config:
+                  type: area
+                  curve: stepline
+                  stroke_width: 0
+                  show:
+                    legend_value: false
+                    in_header: false
+                  transform: "return x === 'on' ? 1 : 0;"
+                series:
+                  - entity: binary_sensor.hallway_motion_occupancy
+                    color: '#3B82F6'
+              - type: custom:apexcharts-card
+                header:
+                  show: true
+                  title: Bathroom
+                  show_states: false
+                graph_span: 24h
+                span:
+                  end: minute
+                apex_config:
+                  chart:
+                    height: 70
+                  legend:
+                    show: false
+                  grid:
+                    show: false
+                  xaxis:
+                    labels:
+                      show: false
+                    axisTicks:
+                      show: false
+                    axisBorder:
+                      show: false
+                  yaxis:
+                    show: false
+                    min: 0
+                    max: 1
+                  fill:
+                    type: solid
+                    opacity: 0.85
+                  tooltip:
+                    enabled: true
+                all_series_config:
+                  type: area
+                  curve: stepline
+                  stroke_width: 0
+                  show:
+                    legend_value: false
+                    in_header: false
+                  transform: "return x === 'on' ? 1 : 0;"
+                series:
+                  - entity: binary_sensor.bathroom_motion_occupancy
+                    color: '#EF4444'
+              - type: custom:apexcharts-card
+                header:
+                  show: true
+                  title: Laundry Room
+                  show_states: false
+                graph_span: 24h
+                span:
+                  end: minute
+                apex_config:
+                  chart:
+                    height: 100
+                  legend:
+                    show: false
+                  grid:
+                    show: false
+                  yaxis:
+                    show: false
+                    min: 0
+                    max: 1
+                  fill:
+                    type: solid
+                    opacity: 0.85
+                  tooltip:
+                    enabled: true
+                all_series_config:
+                  type: area
+                  curve: stepline
+                  stroke_width: 0
+                  show:
+                    legend_value: false
+                    in_header: false
+                  transform: "return x === 'on' ? 1 : 0;"
+                series:
+                  - entity: binary_sensor.laundry_room_motion_occupancy
+                    color: '#A855F7'
