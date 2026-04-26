@@ -604,19 +604,42 @@ views:
             heading_style: title
             icon: mdi:chart-timeline-variant
           - type: custom:apexcharts-card
-            experimental:
-              disable_config_validation: true
             graph_span: 24h
+            span:
+              end: minute
+            yaxis:
+              - id: lanes
+                show: false
+                min: 0.5
+                max: 4.5
+            apex_config:
+              chart:
+                height: 240
+              legend:
+                show: true
+                position: top
+              grid:
+                show: false
+              tooltip:
+                enabled: false
             all_series_config:
-              type: area
+              type: line
               curve: stepline
-              transform: "return x === 'on' ? 1 : 0;"
+              stroke_width: 18
+              yaxis_id: lanes
+              show:
+                legend_value: false
+                in_header: false
             series:
               - entity: binary_sensor.living_room_motion_occupancy
                 name: Living Room
+                transform: "return x === 'on' ? 4 : null;"
               - entity: binary_sensor.hallway_motion_occupancy
                 name: Hallway
+                transform: "return x === 'on' ? 3 : null;"
               - entity: binary_sensor.bathroom_motion_occupancy
                 name: Bathroom
+                transform: "return x === 'on' ? 2 : null;"
               - entity: binary_sensor.laundry_room_motion_occupancy
                 name: Laundry Room
+                transform: "return x === 'on' ? 1 : null;"
