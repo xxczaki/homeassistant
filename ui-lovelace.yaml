@@ -603,166 +603,113 @@ views:
             heading: Occupancy timeline (24h)
             heading_style: title
             icon: mdi:chart-timeline-variant
-          - type: vertical-stack
-            cards:
-              - type: custom:apexcharts-card
-                header:
-                  show: true
-                  title: Living Room
-                  show_states: false
-                graph_span: 24h
-                span:
-                  end: minute
-                apex_config:
-                  chart:
-                    height: 70
-                  legend:
-                    show: false
-                  grid:
-                    show: false
-                  xaxis:
-                    labels:
-                      show: false
-                    axisTicks:
-                      show: false
-                    axisBorder:
-                      show: false
-                  yaxis:
-                    show: false
-                    min: 0
-                    max: 1
-                  fill:
-                    type: solid
-                    opacity: 0.85
-                  tooltip:
-                    enabled: true
-                all_series_config:
-                  type: area
-                  curve: stepline
-                  stroke_width: 0
-                  show:
-                    legend_value: false
-                    in_header: false
-                  transform: "return x === 'on' ? 1 : 0;"
-                series:
-                  - entity: binary_sensor.living_room_motion_occupancy
-                    color: '#FFA500'
-              - type: custom:apexcharts-card
-                header:
-                  show: true
-                  title: Hallway
-                  show_states: false
-                graph_span: 24h
-                span:
-                  end: minute
-                apex_config:
-                  chart:
-                    height: 70
-                  legend:
-                    show: false
-                  grid:
-                    show: false
-                  xaxis:
-                    labels:
-                      show: false
-                    axisTicks:
-                      show: false
-                    axisBorder:
-                      show: false
-                  yaxis:
-                    show: false
-                    min: 0
-                    max: 1
-                  fill:
-                    type: solid
-                    opacity: 0.85
-                  tooltip:
-                    enabled: true
-                all_series_config:
-                  type: area
-                  curve: stepline
-                  stroke_width: 0
-                  show:
-                    legend_value: false
-                    in_header: false
-                  transform: "return x === 'on' ? 1 : 0;"
-                series:
-                  - entity: binary_sensor.hallway_motion_occupancy
-                    color: '#3B82F6'
-              - type: custom:apexcharts-card
-                header:
-                  show: true
-                  title: Bathroom
-                  show_states: false
-                graph_span: 24h
-                span:
-                  end: minute
-                apex_config:
-                  chart:
-                    height: 70
-                  legend:
-                    show: false
-                  grid:
-                    show: false
-                  xaxis:
-                    labels:
-                      show: false
-                    axisTicks:
-                      show: false
-                    axisBorder:
-                      show: false
-                  yaxis:
-                    show: false
-                    min: 0
-                    max: 1
-                  fill:
-                    type: solid
-                    opacity: 0.85
-                  tooltip:
-                    enabled: true
-                all_series_config:
-                  type: area
-                  curve: stepline
-                  stroke_width: 0
-                  show:
-                    legend_value: false
-                    in_header: false
-                  transform: "return x === 'on' ? 1 : 0;"
-                series:
-                  - entity: binary_sensor.bathroom_motion_occupancy
-                    color: '#EF4444'
-              - type: custom:apexcharts-card
-                header:
-                  show: true
-                  title: Laundry Room
-                  show_states: false
-                graph_span: 24h
-                span:
-                  end: minute
-                apex_config:
-                  chart:
-                    height: 100
-                  legend:
-                    show: false
-                  grid:
-                    show: false
-                  yaxis:
-                    show: false
-                    min: 0
-                    max: 1
-                  fill:
-                    type: solid
-                    opacity: 0.85
-                  tooltip:
-                    enabled: true
-                all_series_config:
-                  type: area
-                  curve: stepline
-                  stroke_width: 0
-                  show:
-                    legend_value: false
-                    in_header: false
-                  transform: "return x === 'on' ? 1 : 0;"
-                series:
-                  - entity: binary_sensor.laundry_room_motion_occupancy
-                    color: '#A855F7'
+          - type: custom:apexcharts-card
+            graph_span: 24h
+            span:
+              end: minute
+            yaxis:
+              - id: lanes
+                show: false
+                min: 0.5
+                max: 4.5
+            apex_config:
+              chart:
+                height: 260
+              legend:
+                show: true
+                position: top
+              grid:
+                show: false
+              tooltip:
+                enabled: false
+              stroke:
+                lineCap: butt
+            all_series_config:
+              type: line
+              curve: stepline
+              stroke_width: 18
+              yaxis_id: lanes
+              show:
+                legend_value: false
+                in_header: false
+            series:
+              - entity: binary_sensor.living_room_motion_occupancy
+                name: Living Room
+                color: '#FFA500'
+                data_generator: |
+                  const url = `history/period/${start.toISOString()}?end_time=${end.toISOString()}&filter_entity_id=${entity.entity_id}&minimal_response&no_attributes`;
+                  const data = await hass.callApi('GET', url);
+                  const series = data && data[0] ? data[0] : [];
+                  const points = [];
+                  const periodStart = start.getTime();
+                  let onAt = null;
+                  for (const s of series) {
+                    const t = Math.max(new Date(s.last_changed).getTime(), periodStart);
+                    if (s.state === 'on') { if (onAt === null) onAt = t; }
+                    else if (onAt !== null) {
+                      points.push([onAt, 4]); points.push([t, 4]); points.push([t + 1, null]);
+                      onAt = null;
+                    }
+                  }
+                  if (onAt !== null) { points.push([onAt, 4]); points.push([end.getTime(), 4]); }
+                  return points;
+              - entity: binary_sensor.hallway_motion_occupancy
+                name: Hallway
+                color: '#3B82F6'
+                data_generator: |
+                  const url = `history/period/${start.toISOString()}?end_time=${end.toISOString()}&filter_entity_id=${entity.entity_id}&minimal_response&no_attributes`;
+                  const data = await hass.callApi('GET', url);
+                  const series = data && data[0] ? data[0] : [];
+                  const points = [];
+                  const periodStart = start.getTime();
+                  let onAt = null;
+                  for (const s of series) {
+                    const t = Math.max(new Date(s.last_changed).getTime(), periodStart);
+                    if (s.state === 'on') { if (onAt === null) onAt = t; }
+                    else if (onAt !== null) {
+                      points.push([onAt, 3]); points.push([t, 3]); points.push([t + 1, null]);
+                      onAt = null;
+                    }
+                  }
+                  if (onAt !== null) { points.push([onAt, 3]); points.push([end.getTime(), 3]); }
+                  return points;
+              - entity: binary_sensor.bathroom_motion_occupancy
+                name: Bathroom
+                color: '#EF4444'
+                data_generator: |
+                  const url = `history/period/${start.toISOString()}?end_time=${end.toISOString()}&filter_entity_id=${entity.entity_id}&minimal_response&no_attributes`;
+                  const data = await hass.callApi('GET', url);
+                  const series = data && data[0] ? data[0] : [];
+                  const points = [];
+                  const periodStart = start.getTime();
+                  let onAt = null;
+                  for (const s of series) {
+                    const t = Math.max(new Date(s.last_changed).getTime(), periodStart);
+                    if (s.state === 'on') { if (onAt === null) onAt = t; }
+                    else if (onAt !== null) {
+                      points.push([onAt, 2]); points.push([t, 2]); points.push([t + 1, null]);
+                      onAt = null;
+                    }
+                  }
+                  if (onAt !== null) { points.push([onAt, 2]); points.push([end.getTime(), 2]); }
+                  return points;
+              - entity: binary_sensor.laundry_room_motion_occupancy
+                name: Laundry Room
+                color: '#A855F7'
+                data_generator: |
+                  const url = `history/period/${start.toISOString()}?end_time=${end.toISOString()}&filter_entity_id=${entity.entity_id}&minimal_response&no_attributes`;
+                  const data = await hass.callApi('GET', url);
+                  const series = data && data[0] ? data[0] : [];
+                  const points = [];
+                  const periodStart = start.getTime();
+                  let onAt = null;
+                  for (const s of series) {
+                    const t = Math.max(new Date(s.last_changed).getTime(), periodStart);
+                    if (s.state === 'on') { if (onAt === null) onAt = t; }
+                    else if (onAt !== null) {
+                      points.push([onAt, 1]); points.push([t, 1]); points.push([t + 1, null]);
+                      onAt = null;
+                    }
+                  }
+                  if (onAt !== null) { points.push([onAt, 1]); points.push([end.getTime(), 1]); }
+                  return points;
