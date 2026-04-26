@@ -609,6 +609,12 @@ views:
             graph_span: 24h
             span:
               end: minute
+            yaxis:
+              - id: bin
+                min: 0
+                max: 4
+                apex_config:
+                  show: false
             apex_config:
               chart:
                 height: 220
@@ -616,21 +622,18 @@ views:
               legend:
                 show: true
                 position: top
-              yaxis:
-                show: false
-                min: 0
-                max: 4
               grid:
                 show: false
+              fill:
+                type: solid
+                opacity: 0.8
               tooltip:
                 enabled: true
-                x:
-                  format: ddd HH:mm
             all_series_config:
               type: area
               curve: stepline
               stroke_width: 0
-              opacity: 0.8
+              yaxis_id: bin
               show:
                 legend_value: false
                 in_header: false
