@@ -23,7 +23,8 @@ input_number:
     name: Light on lux threshold
     min: 0
     max: 50
-    step: 1
+    step: 5
+    initial: 50
     mode: slider
     unit_of_measurement: lx
     icon: mdi:sun-wireless

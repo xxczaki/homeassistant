@@ -73,6 +73,23 @@ async def set_grace(hass: HomeAssistant, seconds: int) -> None:
     await hass.async_block_till_done()
 
 
+async def set_lux_threshold(hass: HomeAssistant, lx: int) -> None:
+    """Set the LR daylight gate slider at runtime."""
+    await hass.services.async_call(
+        "input_number",
+        "set_value",
+        {"entity_id": "input_number.light_on_lux_threshold", "value": lx},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+
+async def set_lr_illuminance(hass: HomeAssistant, lx: int) -> None:
+    """Seed the LR Hue PIR's illuminance reading."""
+    hass.states.async_set("sensor.living_room_motion_illuminance", str(lx))
+    await asyncio.sleep(0)
+
+
 # ── inspection ──────────────────────────────────────────────────────────
 
 
