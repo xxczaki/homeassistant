@@ -607,18 +607,17 @@ views:
             header:
               show: false
             graph_span: 24h
+            stacked: true
             span:
               end: minute
             yaxis:
               - id: bin
+                show: false
                 min: 0
                 max: 4
-                apex_config:
-                  show: false
             apex_config:
               chart:
                 height: 220
-                stacked: true
               legend:
                 show: true
                 position: top
