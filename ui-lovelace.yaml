@@ -577,6 +577,10 @@ views:
                 name: Person
               - entity: input_number.presence_grace_seconds
                 name: Grace seconds
+              - entity: input_number.light_on_lux_threshold
+                name: LR light-on lux threshold
+              - entity: sensor.living_room_motion_illuminance
+                name: LR illuminance (now)
 
       - type: grid
         cards:
