@@ -109,16 +109,6 @@
   - condition: state
     entity_id: input_boolean.presence_enabled
     state: 'on'
-  # LR-only daylight gate: skip turning on the living room lamp when the
-  # PIR's own illuminance reading is at or above the threshold slider.
-  # Other rooms (bathroom, laundry) have no usable daylight so they stay
-  # unconditional. Sensor missing/unavailable -> treat as dark (float(0))
-  # so a flaky sensor never traps the room in the dark.
-  - condition: template
-    value_template: >-
-      {{ trigger.id != 'living_room'
-         or states('sensor.living_room_motion_illuminance')|float(0)
-            < states('input_number.light_on_lux_threshold')|float(50) }}
   actions:
   - variables:
       new_room: "{{ trigger.id }}"
@@ -126,14 +116,30 @@
         living_room: light.living_room
         bathroom: light.bathroom_light
         laundry_room: light.laundry_room_light
+  # Always update current_room, even when the daylight gate skips the
+  # light. Otherwise daylight LR motion leaves current_room pinned on the
+  # previous room and room_cleanup_after_settle never fires – the previous
+  # room's light gets orphaned (e.g. bathroom stays on for hours).
   - target:
       entity_id: input_select.current_room
     data:
       option: "{{ new_room }}"
     action: input_select.select_option
-  - target:
-      entity_id: "{{ rooms[new_room] }}"
-    action: light.turn_on
+  # LR-only daylight gate: skip turning on the living room lamp when the
+  # PIR's own illuminance reading is at or above the threshold slider.
+  # Other rooms (bathroom, laundry) have no usable daylight so they stay
+  # unconditional. Sensor missing/unavailable -> treat as dark (float(0))
+  # so a flaky sensor never traps the room in the dark.
+  - if:
+    - condition: template
+      value_template: >-
+        {{ trigger.id != 'living_room'
+           or states('sensor.living_room_motion_illuminance')|float(0)
+              < states('input_number.light_on_lux_threshold')|float(50) }}
+    then:
+    - target:
+        entity_id: "{{ rooms[new_room] }}"
+      action: light.turn_on
   mode: single
 - id: room_cleanup_after_settle
   alias: 'Presence: Cleanup non-current rooms after settle (Layer 1b)'
