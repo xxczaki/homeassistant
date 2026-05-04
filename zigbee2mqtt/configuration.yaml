@@ -27,9 +27,9 @@ devices:
   '0x001788010b9da96f':
     friendly_name: Hallway Light
   '0x001788010b9d596e':
-    friendly_name: Kitchenette Light
+    friendly_name: Kitchenette Lamp 1
   '0x0017880109aedc70':
-    friendly_name: Bedroom Light
+    friendly_name: Kitchenette Lamp 2
   '0x0017880109aedb1d':
     friendly_name: Bathroom Light
   '0x001788010f6a019e':
@@ -47,3 +47,5 @@ devices:
   '0xf082c0fffe4db2e4':
     friendly_name: Kitchenette Switch
     state_action: true
+  '0x001788010fdc40d8':
+    friendly_name: Bedroom Light
