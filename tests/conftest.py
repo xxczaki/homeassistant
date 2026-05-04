@@ -44,7 +44,9 @@ LIGHTS = (
     "light.hallway_light",
     # Group members + the IKEA strip – leave_home_lights_off targets them,
     # and manual_light_override would error if they don't exist.
-    "light.kitchenette_light",
+    "light.kitchenette_lamp",
+    "light.kitchenette_lamp_1",
+    "light.kitchenette_lamp_2",
     "light.bedroom_light",
     "light.kitchenette_light_strip",
 )
