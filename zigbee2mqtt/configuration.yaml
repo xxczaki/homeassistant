@@ -49,3 +49,5 @@ devices:
     state_action: true
   '0x001788010fdc40d8':
     friendly_name: Bedroom Light
+  '0x94a081fffed3bf4e':
+    friendly_name: Laundry Room Switch
