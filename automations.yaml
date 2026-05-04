@@ -345,6 +345,23 @@
   actions:
   - action: shell_command.push_config
   mode: single
+- id: laundry_room_switch_toggle
+  alias: 'Switch: Laundry room switch -> toggle laundry room light'
+  description: >-
+    ZBMINIR2 with detach_relay_mode=true + external_trigger_mode=following(off),
+    wall switch (Gira) wired to S2 input. Each Gira flip publishes
+    action=toggle on zigbee2mqtt/Laundry Room Switch/action; mirror onto the
+    Hue bulb. State-based triggers won't work here because the relay is detached
+    and only emits action events, not OFF<->ON state transitions.
+  triggers:
+  - trigger: mqtt
+    topic: zigbee2mqtt/Laundry Room Switch/action
+    payload: toggle
+  actions:
+  - action: light.toggle
+    target:
+      entity_id: light.laundry_room_light
+  mode: single
 - id: kitchenette_switch_toggle
   alias: 'Switch: Kitchenette switch -> sync kitchenette light strip (TRÅDFRI)'
   description: >-
