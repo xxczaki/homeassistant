@@ -12,8 +12,13 @@ light:
   - platform: group
     name: Living Room
     entities:
-      - light.kitchenette_light
+      - light.kitchenette_lamp
       - light.bedroom_light
+  - platform: group
+    name: Kitchenette Lamp
+    entities:
+      - light.kitchenette_lamp_1
+      - light.kitchenette_lamp_2
 
 automation: !include automations.yaml
 script: !include scripts.yaml
