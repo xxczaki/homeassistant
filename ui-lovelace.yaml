@@ -216,6 +216,79 @@ views:
               - value: 35
                 color: "#ef4444"
 
+      # Plants
+      - type: grid
+        cards:
+          - type: heading
+            heading: Plants
+            heading_style: title
+            icon: mdi:sprout
+          - type: heading
+            heading: Wild strawberry · Balcony
+            heading_style: subtitle
+            icon: mdi:fruit-cherries
+          - type: horizontal-stack
+            cards:
+              # Moisture: water below ~25 %, optimal 35-60 %, soggy >60 %.
+              - type: custom:mushroom-template-card
+                primary: Moisture
+                secondary: "{{ states('sensor.plant_sensor_472b_moisture') }} %"
+                icon: mdi:water-percent
+                icon_color: >-
+                  {% set v = states('sensor.plant_sensor_472b_moisture') | float(-1) %}
+                  {% if v < 0 %}disabled
+                  {% elif v < 25 %}red
+                  {% elif v < 35 %}orange
+                  {% elif v > 60 %}blue
+                  {% else %}green{% endif %}
+              # Conductivity: fertility proxy. <350 µS/cm = feed soon, 350-2000 healthy.
+              - type: custom:mushroom-template-card
+                primary: Fertility
+                secondary: "{{ states('sensor.plant_sensor_472b_conductivity') }} µS/cm"
+                icon: mdi:flash
+                icon_color: >-
+                  {% set v = states('sensor.plant_sensor_472b_conductivity') | float(-1) %}
+                  {% if v < 0 %}disabled
+                  {% elif v < 350 %}orange
+                  {% elif v > 2000 %}red
+                  {% else %}green{% endif %}
+              # Light: full sun for berries; <2500 lx = shaded, >30000 = scorching.
+              - type: custom:mushroom-template-card
+                primary: Light
+                secondary: "{{ states('sensor.plant_sensor_472b_illuminance') }} lx"
+                icon: mdi:white-balance-sunny
+                icon_color: >-
+                  {% set v = states('sensor.plant_sensor_472b_illuminance') | float(-1) %}
+                  {% if v < 0 %}disabled
+                  {% elif v < 2500 %}grey
+                  {% elif v > 30000 %}orange
+                  {% else %}yellow{% endif %}
+              # Temperature: F. vesca tolerates 8-32 °C; outside = red.
+              - type: custom:mushroom-template-card
+                primary: Temperature
+                secondary: "{{ states('sensor.plant_sensor_472b_temperature') }} °C"
+                icon: mdi:thermometer
+                icon_color: >-
+                  {% set v = states('sensor.plant_sensor_472b_temperature') | float(-100) %}
+                  {% if v == -100 %}disabled
+                  {% elif v < 8 or v > 32 %}red
+                  {% else %}green{% endif %}
+          - type: custom:mini-graph-card
+            name: Moisture (48h)
+            icon: mdi:water-percent
+            hours_to_show: 48
+            animate: true
+            entities:
+              - entity: sensor.plant_sensor_472b_moisture
+                color: "#3b82f6"
+            color_thresholds:
+              - value: 0
+                color: "#ef4444"
+              - value: 25
+                color: "#eab308"
+              - value: 35
+                color: "#22c55e"
+
       # Printer & Car
       - type: grid
         cards:
@@ -400,32 +473,6 @@ views:
               - entity: sensor.ucg_ultra_microsoft_wan_latency
                 name: Microsoft
                 color: "#22c55e"
-
-  # ── Energy ─────────────────────────────────────────────────
-  - title: Energy
-    icon: mdi:transmission-tower
-    type: sections
-    sections:
-      - type: grid
-        cards:
-          - type: heading
-            heading: Grid Carbon Intensity
-            heading_style: title
-            icon: mdi:molecule-co2
-          - type: custom:mini-graph-card
-            name: CO2 Intensity (24h)
-            icon: mdi:molecule-co2
-            hours_to_show: 24
-            animate: true
-            entities:
-              - entity: sensor.electricity_maps_co2_intensity
-            color_thresholds:
-              - value: 0
-                color: "#22c55e"
-              - value: 200
-                color: "#eab308"
-              - value: 400
-                color: "#ef4444"
 
   # ── System ─────────────────────────────────────────────────
   - title: System
