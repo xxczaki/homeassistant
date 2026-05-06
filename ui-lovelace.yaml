@@ -631,7 +631,7 @@ views:
             icon_color: *battery_color
           - type: custom:mushroom-template-card
             entity: sensor.plant_sensor_472b_battery
-            primary: Strawberry Sensor
+            primary: Plant Sensor 472B
             secondary: "{{ states(entity) }} %"
             icon: *battery_icon
             icon_color: *battery_color
