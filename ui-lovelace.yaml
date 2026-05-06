@@ -227,10 +227,11 @@ views:
           # actually changes day-to-day, so it leads. The card already
           # surfaces the current value as its big number, which is why
           # the separate Moisture tile below was dropped (redundant).
-          # upper_bound 70 (was 100): readings have lived between 4 % and
-          # 50 %, so a 0-100 axis squashed everything into the bottom
-          # half. 70 keeps the >60 % "soggy" threshold visible without
-          # wasting headroom on a band the plant should never reach.
+          # upper_bound 55: readings have lived between 4 % and 50 %, so
+          # we crop right above the observed max. The >60 % threshold
+          # band falls off the chart, but the threshold itself still
+          # colors the line if moisture ever spikes there – it would just
+          # clip at the top edge, which is a fine "you over-watered" cue.
           - type: custom:mini-graph-card
             name: Moisture (24h)
             icon: mdi:water-percent
@@ -239,7 +240,7 @@ views:
             animate: true
             line_width: 3
             lower_bound: 0
-            upper_bound: 70
+            upper_bound: 55
             show:
               extrema: true
               average: true
