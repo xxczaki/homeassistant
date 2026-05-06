@@ -120,6 +120,15 @@ async def presence_hass(hass: HomeAssistant) -> HomeAssistant:
     # exercise the leave-home flow override this explicitly.
     hass.states.async_set("person.antek", "home")
 
+    # Seed lux threshold + LR illuminance to a non-blocking default. The
+    # input_number has no `initial:` (so the user's slider value survives HA
+    # restarts in production) – without seeding, it falls to `min: 0` and the
+    # daylight gate template (`lux < threshold`) blocks every LR motion.
+    # 50 = previous initial + the template's fallback. Tests exercising the
+    # gate explicitly override via set_lux_threshold / set_lr_illuminance.
+    hass.states.async_set("input_number.light_on_lux_threshold", "50")
+    hass.states.async_set("sensor.living_room_motion_illuminance", "0")
+
     # In-test light services. Mutate state on call so subsequent template
     # reads (`is_state(light.X, 'on')`) reflect what the automation just did.
     async def _light_turn_on(call: ServiceCall) -> None:
