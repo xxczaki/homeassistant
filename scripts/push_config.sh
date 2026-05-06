@@ -61,3 +61,12 @@ if ! git diff --cached --quiet; then
   git commit -m "Auto-commit from HA"
   git push origin main
 fi
+
+# `update-index --add --cacheinfo` above rewrites the index entry and
+# drops the skip-worktree bit. If we exit here the live secrets show up
+# as a dirty worktree, and the git-pull addon at next HA boot bails with
+# `cannot pull with rebase: You have unstaged changes` before any
+# automation can recover. Re-apply, idempotently.
+if ! git ls-files -t zigbee2mqtt/configuration.yaml 2>/dev/null | grep -q '^S'; then
+  git update-index --skip-worktree zigbee2mqtt/configuration.yaml
+fi
