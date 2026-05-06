@@ -223,32 +223,47 @@ views:
             heading: Plants
             heading_style: title
             icon: mdi:sprout
-          - type: heading
-            heading: Wild strawberry · Balcony
-            heading_style: subtitle
-            icon: mdi:fruit-cherries
-          # 2x2 grid + vertical layout: each tile gets ~half the section
-          # width (vs. quarter under horizontal-stack), so labels and
-          # values render in full instead of truncating to "M..." / "1...".
-          # Value goes on the primary (large) line, metric name is the
-          # secondary (small) line below the icon.
+          # Graph is the primary read on this section – moisture is what
+          # actually changes day-to-day, so it leads. The card already
+          # surfaces the current value as its big number, which is why
+          # the separate Moisture tile below was dropped (redundant).
+          # upper_bound 70 (was 100): readings have lived between 4 % and
+          # 50 %, so a 0-100 axis squashed everything into the bottom
+          # half. 70 keeps the >60 % "soggy" threshold visible without
+          # wasting headroom on a band the plant should never reach.
+          - type: custom:mini-graph-card
+            name: Moisture (24h)
+            icon: mdi:water-percent
+            hours_to_show: 24
+            points_per_hour: 4
+            animate: true
+            line_width: 3
+            lower_bound: 0
+            upper_bound: 70
+            show:
+              extrema: true
+              average: true
+              fill: fade
+            color_thresholds_transition: hard
+            entities:
+              - entity: sensor.plant_sensor_472b_moisture
+            color_thresholds:
+              - value: 0
+                color: "#ef4444"
+              - value: 25
+                color: "#eab308"
+              - value: 35
+                color: "#22c55e"
+              - value: 60
+                color: "#3b82f6"
+          # Three remaining metrics in one row. columns: 3 + vertical
+          # layout keeps icon-over-value-over-label compact; with only
+          # 3 tiles each one gets ~1/3 of the section width, comfortably
+          # fitting "489 µS/cm" and "Temperature" in full.
           - type: grid
-            columns: 2
+            columns: 3
             square: false
             cards:
-              # Moisture: water below ~25 %, optimal 35-60 %, soggy >60 %.
-              - type: custom:mushroom-template-card
-                layout: vertical
-                primary: "{{ states('sensor.plant_sensor_472b_moisture') }} %"
-                secondary: Moisture
-                icon: mdi:water-percent
-                icon_color: >-
-                  {% set v = states('sensor.plant_sensor_472b_moisture') | float(-1) %}
-                  {% if v < 0 %}disabled
-                  {% elif v < 25 %}red
-                  {% elif v < 35 %}orange
-                  {% elif v > 60 %}blue
-                  {% else %}green{% endif %}
               # Conductivity: fertility proxy. <350 µS/cm = feed soon, 350-2000 healthy.
               - type: custom:mushroom-template-card
                 layout: vertical
@@ -284,40 +299,6 @@ views:
                   {% if v == -100 %}disabled
                   {% elif v < 8 or v > 32 %}red
                   {% else %}green{% endif %}
-          # 24h window – 48h was mostly flat baseline pre-watering and
-          # made the recent step useless to read. lower/upper bound pin
-          # the y-axis to 0-100 % so a watering event shows as a real
-          # cliff instead of being auto-scaled into a flat line.
-          # entities[].color is intentionally absent: setting it would
-          # override color_thresholds, which is why the line was blue
-          # everywhere instead of red/yellow/green per the tile bands.
-          # color_thresholds_transition: hard mirrors the tile colors
-          # crisply (red <25, yellow 25-35, green 35-60, blue >60 soggy).
-          - type: custom:mini-graph-card
-            name: Moisture (24h)
-            icon: mdi:water-percent
-            hours_to_show: 24
-            points_per_hour: 4
-            animate: true
-            line_width: 3
-            lower_bound: 0
-            upper_bound: 100
-            show:
-              extrema: true
-              average: true
-              fill: fade
-            color_thresholds_transition: hard
-            entities:
-              - entity: sensor.plant_sensor_472b_moisture
-            color_thresholds:
-              - value: 0
-                color: "#ef4444"
-              - value: 25
-                color: "#eab308"
-              - value: 35
-                color: "#22c55e"
-              - value: 60
-                color: "#3b82f6"
 
       # Printer & Car
       - type: grid
