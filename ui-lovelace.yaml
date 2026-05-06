@@ -227,12 +227,20 @@ views:
             heading: Wild strawberry · Balcony
             heading_style: subtitle
             icon: mdi:fruit-cherries
-          - type: horizontal-stack
+          # 2x2 grid + vertical layout: each tile gets ~half the section
+          # width (vs. quarter under horizontal-stack), so labels and
+          # values render in full instead of truncating to "M..." / "1...".
+          # Value goes on the primary (large) line, metric name is the
+          # secondary (small) line below the icon.
+          - type: grid
+            columns: 2
+            square: false
             cards:
               # Moisture: water below ~25 %, optimal 35-60 %, soggy >60 %.
               - type: custom:mushroom-template-card
-                primary: Moisture
-                secondary: "{{ states('sensor.plant_sensor_472b_moisture') }} %"
+                layout: vertical
+                primary: "{{ states('sensor.plant_sensor_472b_moisture') }} %"
+                secondary: Moisture
                 icon: mdi:water-percent
                 icon_color: >-
                   {% set v = states('sensor.plant_sensor_472b_moisture') | float(-1) %}
@@ -243,8 +251,9 @@ views:
                   {% else %}green{% endif %}
               # Conductivity: fertility proxy. <350 µS/cm = feed soon, 350-2000 healthy.
               - type: custom:mushroom-template-card
-                primary: Fertility
-                secondary: "{{ states('sensor.plant_sensor_472b_conductivity') }} µS/cm"
+                layout: vertical
+                primary: "{{ states('sensor.plant_sensor_472b_conductivity') }} µS/cm"
+                secondary: Fertility
                 icon: mdi:flash
                 icon_color: >-
                   {% set v = states('sensor.plant_sensor_472b_conductivity') | float(-1) %}
@@ -254,8 +263,9 @@ views:
                   {% else %}green{% endif %}
               # Light: full sun for berries; <2500 lx = shaded, >30000 = scorching.
               - type: custom:mushroom-template-card
-                primary: Light
-                secondary: "{{ states('sensor.plant_sensor_472b_illuminance') }} lx"
+                layout: vertical
+                primary: "{{ states('sensor.plant_sensor_472b_illuminance') }} lx"
+                secondary: Light
                 icon: mdi:white-balance-sunny
                 icon_color: >-
                   {% set v = states('sensor.plant_sensor_472b_illuminance') | float(-1) %}
@@ -265,19 +275,32 @@ views:
                   {% else %}yellow{% endif %}
               # Temperature: F. vesca tolerates 8-32 °C; outside = red.
               - type: custom:mushroom-template-card
-                primary: Temperature
-                secondary: "{{ states('sensor.plant_sensor_472b_temperature') }} °C"
+                layout: vertical
+                primary: "{{ states('sensor.plant_sensor_472b_temperature') }} °C"
+                secondary: Temperature
                 icon: mdi:thermometer
                 icon_color: >-
                   {% set v = states('sensor.plant_sensor_472b_temperature') | float(-100) %}
                   {% if v == -100 %}disabled
                   {% elif v < 8 or v > 32 %}red
                   {% else %}green{% endif %}
+          # lower/upper bound pin the y-axis to 0-100 % so a recent drop
+          # from 60 % to 14 % shows as a real cliff instead of getting
+          # auto-scaled into a flat line. extrema/average annotate the
+          # range without needing a second card.
           - type: custom:mini-graph-card
-            name: Moisture (48h)
+            name: Moisture trend (48h)
             icon: mdi:water-percent
             hours_to_show: 48
+            points_per_hour: 2
             animate: true
+            line_width: 3
+            lower_bound: 0
+            upper_bound: 100
+            show:
+              extrema: true
+              average: true
+              fill: fade
             entities:
               - entity: sensor.plant_sensor_472b_moisture
                 color: "#3b82f6"
