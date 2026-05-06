@@ -284,15 +284,20 @@ views:
                   {% if v == -100 %}disabled
                   {% elif v < 8 or v > 32 %}red
                   {% else %}green{% endif %}
-          # lower/upper bound pin the y-axis to 0-100 % so a recent drop
-          # from 60 % to 14 % shows as a real cliff instead of getting
-          # auto-scaled into a flat line. extrema/average annotate the
-          # range without needing a second card.
+          # 24h window – 48h was mostly flat baseline pre-watering and
+          # made the recent step useless to read. lower/upper bound pin
+          # the y-axis to 0-100 % so a watering event shows as a real
+          # cliff instead of being auto-scaled into a flat line.
+          # entities[].color is intentionally absent: setting it would
+          # override color_thresholds, which is why the line was blue
+          # everywhere instead of red/yellow/green per the tile bands.
+          # color_thresholds_transition: hard mirrors the tile colors
+          # crisply (red <25, yellow 25-35, green 35-60, blue >60 soggy).
           - type: custom:mini-graph-card
-            name: Moisture trend (48h)
+            name: Moisture (24h)
             icon: mdi:water-percent
-            hours_to_show: 48
-            points_per_hour: 2
+            hours_to_show: 24
+            points_per_hour: 4
             animate: true
             line_width: 3
             lower_bound: 0
@@ -301,9 +306,9 @@ views:
               extrema: true
               average: true
               fill: fade
+            color_thresholds_transition: hard
             entities:
               - entity: sensor.plant_sensor_472b_moisture
-                color: "#3b82f6"
             color_thresholds:
               - value: 0
                 color: "#ef4444"
@@ -311,6 +316,8 @@ views:
                 color: "#eab308"
               - value: 35
                 color: "#22c55e"
+              - value: 60
+                color: "#3b82f6"
 
       # Printer & Car
       - type: grid
