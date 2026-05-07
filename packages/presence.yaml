@@ -27,6 +27,26 @@ input_number:
     mode: slider
     unit_of_measurement: lx
     icon: mdi:sun-wireless
+binary_sensor:
+  # OR-aggregates so motion automations can use clean state triggers with
+  # `for:` instead of multi-entity template triggers (template triggers
+  # reset on every dependency change, which is harder to reason about).
+  - platform: group
+    name: Tracked Rooms Motion
+    device_class: motion
+    entities:
+      - binary_sensor.living_room_motion_occupancy
+      - binary_sensor.bathroom_motion_occupancy
+      - binary_sensor.laundry_room_motion_occupancy
+  - platform: group
+    name: All Rooms Motion
+    device_class: motion
+    entities:
+      - binary_sensor.hallway_motion_occupancy
+      - binary_sensor.living_room_motion_occupancy
+      - binary_sensor.bathroom_motion_occupancy
+      - binary_sensor.laundry_room_motion_occupancy
+
 input_select:
   current_room:
     name: Current room

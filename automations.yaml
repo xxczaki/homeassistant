@@ -194,25 +194,24 @@
 - id: hallway_dwell_turnoff
   alias: 'Presence: Hallway dwell -> turn off current room (Layer 2)'
   description: >-
-    Fires when hallway motion has been 'on' AND every tracked room motion
-    has been 'off' continuously for 90s, i.e. the user is genuinely
-    dwelling in the hallway (hanging laundry, tying shoes) rather than
-    transiting. Any tracked-room motion during the window resets the timer,
-    so arrival sequences like LR->hallway->laundry->hallway->LR don't
-    trigger this. On fire, turn off current_room's light and reset
-    current_room to none.
+    Fires when every tracked room has been 'off' for 90s and the hallway PIR
+    is currently 'on', i.e. the user is genuinely dwelling in the hallway
+    (hanging laundry, tying shoes) rather than transiting. Any tracked-room
+    motion during the window resets the timer, so arrival sequences like
+    LR->hallway->laundry->hallway->LR don't trigger this. On fire, turn off
+    current_room's light and reset current_room to none.
   triggers:
-  - trigger: template
-    value_template: >-
-      {{ is_state('binary_sensor.hallway_motion_occupancy', 'on')
-         and is_state('binary_sensor.living_room_motion_occupancy', 'off')
-         and is_state('binary_sensor.bathroom_motion_occupancy', 'off')
-         and is_state('binary_sensor.laundry_room_motion_occupancy', 'off') }}
+  - trigger: state
+    entity_id: binary_sensor.tracked_rooms_motion
+    to: 'off'
     for:
       seconds: 90
   conditions:
   - condition: state
     entity_id: input_boolean.presence_enabled
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.hallway_motion_occupancy
     state: 'on'
   actions:
   - variables:
@@ -249,12 +248,9 @@
       minutes: 2
     trigger: state
     id: person_left
-  - platform: template
-    value_template: >-
-      {{ is_state('binary_sensor.hallway_motion_occupancy', 'off')
-         and is_state('binary_sensor.living_room_motion_occupancy', 'off')
-         and is_state('binary_sensor.bathroom_motion_occupancy', 'off')
-         and is_state('binary_sensor.laundry_room_motion_occupancy', 'off') }}
+  - trigger: state
+    entity_id: binary_sensor.all_rooms_motion
+    to: 'off'
     for:
       minutes: 10
     id: no_motion
