@@ -77,6 +77,14 @@ views:
                   top: "68%"
                 tap_action:
                   action: toggle
+              - type: state-icon
+                entity: switch.balcony_switch_l1
+                icon: mdi:lightbulb
+                style:
+                  left: "88%"
+                  top: "85%"
+                tap_action:
+                  action: toggle
           - type: custom:mushroom-light-card
             entity: light.living_room
             show_brightness_control: true
