@@ -282,6 +282,9 @@
       - light.bedroom_light
     action: light.turn_off
   - target:
+      entity_id: switch.balcony_switch_l1
+    action: switch.turn_off
+  - target:
       entity_id: input_select.current_room
     data:
       option: none
@@ -317,6 +320,9 @@
           - light.bathroom_light
           - light.laundry_room_light
           - light.kitchenette_light_strip
+      - action: switch.turn_off
+        target:
+          entity_id: switch.balcony_switch_l1
     - conditions:
       - condition: trigger
         id: 'off'
@@ -329,6 +335,9 @@
           - light.bathroom_light
           - light.laundry_room_light
           - light.kitchenette_light_strip
+      - action: switch.turn_off
+        target:
+          entity_id: switch.balcony_switch_l1
   mode: single
 - id: push_config_on_shutdown
   alias: 'System: Push config to GitHub on shutdown'

@@ -51,3 +51,5 @@ devices:
     friendly_name: Bedroom Light
   '0x94a081fffed3bf4e':
     friendly_name: Laundry Room Switch
+  '0x6cfd22fffeb53cf3':
+    friendly_name: Balcony Switch
