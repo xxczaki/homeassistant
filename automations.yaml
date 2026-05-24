@@ -130,10 +130,19 @@
   # Other rooms (bathroom, laundry) have no usable daylight so they stay
   # unconditional. Sensor missing/unavailable -> treat as dark (float(0))
   # so a flaky sensor never traps the room in the dark.
+  #
+  # Night bypass: when sun is below horizon, ignore the lux gate entirely.
+  # The Hue PIR only pushes a new illuminance reading on motion events, so
+  # when R1b turns the LR lamp off while you're in the bathroom, the
+  # PIR's last reading is still the lamp's own spill (~25 lx) and lags
+  # the real darkness by hundreds of ms after re-entry – just long enough
+  # to lose the race against the motion trigger. Daylight gating has no
+  # purpose at night anyway: there is no daylight.
   - if:
     - condition: template
       value_template: >-
         {{ trigger.id != 'living_room'
+           or is_state('sun.sun', 'below_horizon')
            or states('sensor.living_room_motion_illuminance')|float(0)
               < states('input_number.light_on_lux_threshold')|float(50) }}
     then:

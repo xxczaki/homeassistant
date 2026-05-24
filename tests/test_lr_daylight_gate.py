@@ -20,6 +20,7 @@ from .helpers import (
     set_grace,
     set_lr_illuminance,
     set_lux_threshold,
+    set_sun,
 )
 
 
@@ -123,3 +124,66 @@ async def test_gated_lr_motion_still_updates_current_room(presence_hass):
     await advance(hass, seconds=60)
     assert light(hass, "living_room") == "on"
     assert light(hass, "bathroom_light") == "off"
+
+
+async def test_night_bypass_after_r1b_kills_lr(presence_hass):
+    """Regression: 2026-05-24 02:04 production incident.
+
+    Sequence reconstructed from the recorder DB:
+      02:00:42 LR PIR reports lux=26 (lamp's own spill while LR is lit)
+      02:01:37 user enters bathroom -> current_room=bathroom
+      02:04:37.220 R1b fires (180s grace) -> light.living_room OFF
+      02:04:37.758 user enters LR -> LR motion ON
+      02:04:37.764 Layer 1 sets current_room=living_room, evaluates gate
+      02:04:37.813 PIR's new lux=5 lands ~49 ms TOO LATE
+    Gate read stale 26 vs threshold 10 -> light skipped. Room stayed
+    dark until the user back-tracked to the bathroom and returned.
+
+    At night the gate has no job (no daylight to suppress), so it
+    bypasses on `sun.sun=below_horizon` and lights up regardless of
+    a stale PIR reading.
+    """
+    hass = presence_hass
+    await set_sun(hass, below_horizon=True)
+    await set_grace(hass, 45)
+    await set_lux_threshold(hass, 10)
+
+    # User in LR, lamp on, PIR's reading is the lamp's own spill (~26 lx).
+    await set_lr_illuminance(hass, 2)
+    await motion(hass, "living_room", on=True)
+    assert light(hass, "living_room") == "on"
+    await set_lr_illuminance(hass, 26)
+
+    # Off to the bathroom, sit long enough for R1b to kill the LR.
+    await motion(hass, "living_room", on=False)
+    await motion(hass, "bathroom", on=True)
+    assert current_room(hass) == "bathroom"
+    await advance(hass, seconds=60)
+    assert light(hass, "living_room") == "off"
+    # PIR illuminance is still the pre-killoff reading – no motion in LR
+    # means Hue hasn't pushed a fresh value.
+    assert hass.states.get("sensor.living_room_motion_illuminance").state == "26"
+
+    # Walk back to LR. Stale lux (26) is above threshold (10), so under
+    # the old logic the gate would block – but it's night, so the bypass
+    # wins and the lamp comes back on.
+    await motion(hass, "bathroom", on=False)
+    await motion(hass, "living_room", on=True)
+    assert current_room(hass) == "living_room"
+    assert light(hass, "living_room") == "on"
+
+
+async def test_day_gate_still_blocks_when_lux_high(presence_hass):
+    """Daytime counterpart: the night bypass must not leak into daylight.
+
+    Same stale-lux setup, but sun is above_horizon -> real daylight is
+    plausible -> the lux gate still suppresses the lamp.
+    """
+    hass = presence_hass
+    await set_sun(hass, below_horizon=False)
+    await set_lux_threshold(hass, 10)
+    await set_lr_illuminance(hass, 200)
+
+    await motion(hass, "living_room", on=True)
+    assert current_room(hass) == "living_room"
+    assert light(hass, "living_room") == "off"

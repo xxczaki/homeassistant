@@ -129,6 +129,11 @@ async def presence_hass(hass: HomeAssistant) -> HomeAssistant:
     hass.states.async_set("input_number.light_on_lux_threshold", "50")
     hass.states.async_set("sensor.living_room_motion_illuminance", "0")
 
+    # Default sun to above_horizon so the LR daylight gate's night bypass
+    # doesn't accidentally short-circuit lux-threshold tests. The night
+    # path is exercised explicitly via set_sun(hass, below_horizon=True).
+    hass.states.async_set("sun.sun", "above_horizon")
+
     # In-test light services. Mutate state on call so subsequent template
     # reads (`is_state(light.X, 'on')`) reflect what the automation just did.
     async def _light_turn_on(call: ServiceCall) -> None:

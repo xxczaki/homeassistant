@@ -90,6 +90,14 @@ async def set_lr_illuminance(hass: HomeAssistant, lx: int) -> None:
     await asyncio.sleep(0)
 
 
+async def set_sun(hass: HomeAssistant, *, below_horizon: bool) -> None:
+    """Set sun.sun for the LR daylight gate's night bypass."""
+    hass.states.async_set(
+        "sun.sun", "below_horizon" if below_horizon else "above_horizon"
+    )
+    await asyncio.sleep(0)
+
+
 # ── inspection ──────────────────────────────────────────────────────────
 
 
