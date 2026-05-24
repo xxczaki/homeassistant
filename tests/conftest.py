@@ -108,6 +108,14 @@ async def presence_hass(hass: HomeAssistant) -> HomeAssistant:
     )
     await hass.async_block_till_done()
 
+    # The kill switch has no `initial:` in the YAML – production relies on
+    # restore_state to remember the user's last value, but the test
+    # harness boots without any restored state, so we'd start OFF and
+    # every automation would short-circuit. Establish the "presence
+    # enabled" precondition explicitly; tests exercising the kill switch
+    # flip it off themselves.
+    hass.states.async_set("input_boolean.presence_enabled", "on")
+
     # Seed sensors + lights to a known idle state BEFORE loading automations,
     # so initial-state-restoration doesn't fire spurious triggers.
     for sensor in MOTION_SENSORS:
