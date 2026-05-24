@@ -379,14 +379,20 @@
 - id: hallway_switch_toggle
   alias: 'Switch: Hallway switch -> toggle hallway light'
   description: >-
-    ZBMINIR2 with detach_relay_mode=true + external_trigger_mode=following(off),
-    wall switch wired to S2 input. Each flip publishes action=toggle on
-    zigbee2mqtt/Hallway Switch/action; mirror onto the Hue bulb. Manual
-    override coexists with presence: a manual ON sticks until the next
-    60-s motion-off cycle clears it via `hallway_light_off`; a manual OFF
-    sticks until hallway motion next transitions off->on and re-fires
-    `hallway_light_on`. State-based triggers won't work – the relay is
-    detached so only action events, not OFF<->ON state transitions, fire.
+    ZBMINIR2 in the smart-bulb-safe topology: Hue bulb permanently
+    powered (bypassed around the relay), wall switches wired to S1/S2.
+    Z2M device config: detach_relay_mode=true, external_trigger_mode=edge,
+    state_action=true. Each physical flip publishes action=toggle on
+    zigbee2mqtt/Hallway Switch/action; mirror onto the Hue bulb. The
+    relay state never affects the bulb (it has its own permanent live);
+    toggling it via Z2M's UI is purely cosmetic and does nothing to the
+    light. That is intentional and correct – power-cycling Hue bulbs
+    every flip (the laundry's current behaviour) breaks Adaptive
+    Lighting and races HA's Zigbee commands. Manual override coexists
+    with presence: a manual ON sticks until the next 60-s motion-off
+    cycle clears it via `hallway_light_off`; a manual OFF sticks until
+    hallway motion next transitions off->on and re-fires
+    `hallway_light_on`.
   triggers:
   - trigger: mqtt
     topic: zigbee2mqtt/Hallway Switch/action
