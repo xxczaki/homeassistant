@@ -55,6 +55,13 @@ fi
 git add -A
 if [ -n "${REDACTED_SHA:-}" ]; then
   git update-index --add --cacheinfo 100644,"$REDACTED_SHA",zigbee2mqtt/configuration.yaml
+  # `--cacheinfo` rewrites the index entry and drops the skip-worktree
+  # bit. Re-arm RIGHT HERE so any later failure (commit, push, network)
+  # under `set -e` still leaves the worktree clean for the next boot's
+  # git_pull addon. 2026-05-24 incident: previous shutdown's push failed
+  # mid-script, re-arm at script end never ran, next boot's pull bailed
+  # with "Your local changes ... would be overwritten by merge".
+  git update-index --skip-worktree zigbee2mqtt/configuration.yaml
 fi
 
 if ! git diff --cached --quiet; then
@@ -62,11 +69,8 @@ if ! git diff --cached --quiet; then
   git push origin main
 fi
 
-# `update-index --add --cacheinfo` above rewrites the index entry and
-# drops the skip-worktree bit. If we exit here the live secrets show up
-# as a dirty worktree, and the git-pull addon at next HA boot bails with
-# `cannot pull with rebase: You have unstaged changes` before any
-# automation can recover. Re-apply, idempotently.
+# Defensive end-of-script re-arm – idempotent backstop in case some
+# future change introduces another path that drops the bit.
 if ! git ls-files -t zigbee2mqtt/configuration.yaml 2>/dev/null | grep -q '^S'; then
   git update-index --skip-worktree zigbee2mqtt/configuration.yaml
 fi
