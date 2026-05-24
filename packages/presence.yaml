@@ -2,12 +2,17 @@ input_boolean:
   presence_enabled:
     name: Presence-based lighting
     icon: mdi:motion-sensor
-    initial: true
     # Single kill switch for all presence automations. Turn OFF when guests
     # are over, you're hosting, or the model is otherwise getting in the
     # way. Every presence automation gates on this; nothing fires while
     # it's off (motion, hallway, room cleanup, leave-home – all paused).
     # Manual light control via the Hue dimmer / app continues to work.
+    #
+    # No `initial:` – same trap as the lux threshold (commit 5ff1815):
+    # initial: forces the value on every HA restart and overrides
+    # restore_state, so flipping it OFF was getting nuked back to ON by
+    # the next core reload or git_pull cycle. With initial: removed,
+    # restore_state remembers the last value across restarts.
 
 input_number:
   presence_grace_seconds:
