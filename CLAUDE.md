@@ -1,5 +1,11 @@
 # Home Assistant Configuration
 
+## Threat model (read first)
+
+This repo is a **public GitHub repository** (`github.com/xxczaki/homeassistant`). Every commit pushed to `main` is world-readable within seconds. Every blob ever pushed is recoverable by SHA for up to 90 days even after rewrite. The entire secret-handling apparatus described below (Z2M redaction via `--cacheinfo`, skip-worktree, `git add -u` allowlist) exists because of this – if you're tempted to bypass any of it "just this once," don't.
+
+When in doubt: **only modifications to already-tracked files may flow from live HA to GitHub.** Anything new on the live filesystem is suspect until proven safe to publish.
+
 ## Infrastructure
 
 - **Home Assistant OS** accessible via `ssh root@homeassistant.local`
