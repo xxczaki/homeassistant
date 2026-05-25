@@ -17,7 +17,7 @@ git config --local rebase.autoStash true
 
 # The live Z2M config holds secrets that mustn't leak. Mark it
 # skip-worktree so git ignores the working-tree (secret) version
-# entirely: `git add -A` won't pick it up, and `pull --rebase` won't
+# entirely: `git add -u` won't pick it up, and `pull --rebase` won't
 # refuse on dirty-tree. We still stage the redacted blob explicitly
 # below via update-index --cacheinfo. Idempotent — no-op after first run.
 if ! git ls-files -t zigbee2mqtt/configuration.yaml 2>/dev/null | grep -q '^S'; then
@@ -61,7 +61,25 @@ if [ -f zigbee2mqtt/configuration.yaml ]; then
   ' zigbee2mqtt/configuration.yaml | git hash-object -w --stdin)
 fi
 
-git add -A
+# Allowlist: only commit modifications/deletions to ALREADY-tracked
+# files. `git add -A` would silently sweep up any new file HA's
+# subsystems drop into /config — the 2026-05-25 incident leaked
+# Z2M's `configuration.yaml.bak.<unix-ts>` sibling that way, because
+# the path-scoped redaction filter never saw it. With `-u`, new
+# paths become a deliberate dev-machine action; UI edits to
+# existing tracked files still flow through.
+git add -u
+
+# Surface untracked content in the addon log so unexpected new
+# files don't silently rot on disk. Not an abort condition — if
+# Z2M writes another `.bak.<ts>` style sibling we don't yet
+# .gitignore, this is how we'll find out.
+UNTRACKED=$(git ls-files --others --exclude-standard)
+if [ -n "$UNTRACKED" ]; then
+  echo "push_config: untracked files present (NOT committed):" >&2
+  echo "$UNTRACKED" | sed 's/^/  - /' >&2
+fi
+
 if [ -n "${REDACTED_SHA:-}" ]; then
   git update-index --add --cacheinfo 100644,"$REDACTED_SHA",zigbee2mqtt/configuration.yaml
   # `--cacheinfo` rewrites the index entry and drops the skip-worktree

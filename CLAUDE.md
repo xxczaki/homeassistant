@@ -14,8 +14,8 @@
 ## Git Sync
 
 - A git pull addon syncs this repo to HA on startup
-- `scripts/push_config.sh` auto-commits HA config changes (uses `git add -A`)
-- The `.gitignore` must cover all runtime/generated files to prevent push_config.sh from committing junk
+- `scripts/push_config.sh` auto-commits HA config changes via `git add -u` (allowlist: only modifications/deletions to already-tracked files; new files require an explicit dev-side `git add`)
+- `.gitignore` is a secondary line of defense – `-u` itself is the primary one, refusing to sweep any new file into a commit regardless of `.gitignore` coverage
 - Secrets in Z2M config are redacted in the repo (`# password: <redacted>`) but present on the live system – do NOT overwrite the live config with the repo version directly
 
 ## Critical Rules
