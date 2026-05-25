@@ -53,3 +53,5 @@ devices:
     friendly_name: Laundry Room Switch
   '0x6cfd22fffeb53cf3':
     friendly_name: Balcony Switch
+  '0x04e3e5fffeec6af6':
+    friendly_name: Hallway Switch
