@@ -3,7 +3,7 @@ mqtt:
   base_topic: zigbee2mqtt
   server: mqtt://core-mosquitto:1883
   user: addons
-  # password: <redacted>
+  password: looVea2Fah3EiZiica6ohtheefae9joh4umah7ang0ahHooxeem6ov9leepai4ix
 serial:
   port: /dev/ttyACM0
   adapter: ember
@@ -12,9 +12,33 @@ serial:
 advanced:
   log_level: info
   channel: 25
-  # network_key: <redacted>
+  network_key:
+    - 184
+    - 212
+    - 205
+    - 70
+    - 242
+    - 230
+    - 143
+    - 222
+    - 145
+    - 123
+    - 107
+    - 242
+    - 82
+    - 70
+    - 221
+    - 72
   pan_id: 56388
-  # ext_pan_id: <redacted>
+  ext_pan_id:
+    - 7
+    - 144
+    - 160
+    - 98
+    - 17
+    - 13
+    - 213
+    - 7
 frontend:
   enabled: true
   port: 8099
@@ -55,7 +79,5 @@ devices:
     friendly_name: Balcony Switch
   '0x04e3e5fffeec6af6':
     friendly_name: Hallway Switch B
-    state_action: true
   '0xc02cedfffef0b9c5':
     friendly_name: Hallway Switch A
-    state_action: true
