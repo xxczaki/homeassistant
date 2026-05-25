@@ -4,8 +4,6 @@
 
 > 🏠 My personal smart home setup, powered by Home Assistant
 
-This is a **public** repo synced live from a running Home Assistant OS instance via the `core_git_pull` addon and a shutdown-triggered `push_config.sh`. Secrets in `zigbee2mqtt/configuration.yaml` are redacted on the way out via a `git update-index --cacheinfo` trick; nothing else sensitive should ever land here. See [`CLAUDE.md`](./CLAUDE.md) for the full threat model and sync flow.
-
 ## Presence-based lighting
 
 The flat runs a small state machine that tracks `input_select.current_room` and turns lights off only on real transitions, never on a single "no motion" reading. A master kill switch (`input_boolean.presence_enabled`) can disable the whole model, e.g., when guests are over.
