@@ -6,6 +6,8 @@ This repo is a **public GitHub repository** (`github.com/xxczaki/homeassistant`)
 
 When in doubt: **only modifications to already-tracked files may flow from live HA to GitHub.** Anything new on the live filesystem is suspect until proven safe to publish.
 
+The transcript of a Claude session is **not** a leakage channel – secrets that surface in tool output (e.g. an `ha apps info` dump that includes the addon's deploy key) do not require rotation on their own. The threat model is git-scoped: leakage means "ended up in a pushed commit." So don't flag transcript exposure as an incident, but do refuse to copy a secret from the transcript into any tracked file.
+
 ## Infrastructure
 
 - **Home Assistant OS** accessible via `ssh root@homeassistant.local`
