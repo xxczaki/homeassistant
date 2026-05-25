@@ -54,4 +54,8 @@ devices:
   '0x6cfd22fffeb53cf3':
     friendly_name: Balcony Switch
   '0x04e3e5fffeec6af6':
-    friendly_name: Hallway Switch
+    friendly_name: Hallway Switch B
+    state_action: true
+  '0xc02cedfffef0b9c5':
+    friendly_name: Hallway Switch A
+    state_action: true
