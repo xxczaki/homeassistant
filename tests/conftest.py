@@ -51,6 +51,12 @@ LIGHTS = (
     "light.kitchenette_light_strip",
 )
 
+# Switches referenced by presence automations. leave_home_lights_off turns
+# off the balcony L1 alongside the lights; without the entity + a mock
+# switch.turn_off service, the script errors at that step and never reaches
+# the trailing `current_room -> none` reset.
+SWITCHES = ("switch.balcony_switch_l1",)
+
 MOTION_SENSORS = (
     "binary_sensor.living_room_motion_occupancy",
     "binary_sensor.bathroom_motion_occupancy",
@@ -122,6 +128,17 @@ async def presence_hass(hass: HomeAssistant) -> HomeAssistant:
         hass.states.async_set(sensor, "off")
     for light in LIGHTS:
         hass.states.async_set(light, "off")
+    for sw in SWITCHES:
+        hass.states.async_set(sw, "off")
+
+    # Group binary_sensors (`tracked_rooms_motion`, `all_rooms_motion`) are
+    # production triggers for `hallway_dwell_turnoff` and the no-motion
+    # fallback of `leave_home_lights_off`. Set them up AFTER seeding their
+    # member sensors so the initial aggregate state is correct.
+    assert await async_setup_component(
+        hass, "binary_sensor", {"binary_sensor": package["binary_sensor"]}
+    )
+    await hass.async_block_till_done()
 
     # Default person state to 'home' so leave_home_lights_off doesn't fire
     # during long-running tests (3-hour blind-spot test, etc.). Tests that
@@ -154,6 +171,22 @@ async def presence_hass(hass: HomeAssistant) -> HomeAssistant:
 
     hass.services.async_register("light", "turn_on", _light_turn_on)
     hass.services.async_register("light", "turn_off", _light_turn_off)
+
+    # `switch.turn_off` is called by leave_home_lights_off for the balcony
+    # L1; without the service the script errors mid-sequence and never
+    # reaches the `current_room -> none` reset. State mutation matters
+    # less here than for lights (no template reads it back), but mirror
+    # the light shim for symmetry.
+    async def _switch_turn_on(call: ServiceCall) -> None:
+        for eid in _entity_ids(call):
+            hass.states.async_set(eid, "on")
+
+    async def _switch_turn_off(call: ServiceCall) -> None:
+        for eid in _entity_ids(call):
+            hass.states.async_set(eid, "off")
+
+    hass.services.async_register("switch", "turn_on", _switch_turn_on)
+    hass.services.async_register("switch", "turn_off", _switch_turn_off)
 
     # Now the automations. Order matters: their triggers reference the
     # entities + helpers we just set up.
