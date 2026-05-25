@@ -36,6 +36,7 @@ blueprints/
 
 # Zigbee2MQTT runtime (keep configuration.yaml)
 zigbee2mqtt/coordinator_backup.json
+zigbee2mqtt/configuration.yaml.bak.*
 zigbee2mqtt/database.db
 zigbee2mqtt/database.db.*
 zigbee2mqtt/log/

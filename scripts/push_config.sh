@@ -6,6 +6,15 @@ cd /config
 # HA core's container, where shell_command runs.
 export GIT_SSH_COMMAND="ssh -i /config/.ssh/ha_deploy_key -o StrictHostKeyChecking=accept-new"
 
+# The core_git_pull addon runs plain `git pull` (no flags) every few
+# minutes. With these set in .git/config, that becomes a rebase with
+# autostash — so transient UI edits to tracked files (automations.yaml,
+# ui-lovelace.yaml, ...) between push_config runs don't break the
+# addon's next cycle. Idempotent; cheap to re-assert on every run so
+# the invariant survives re-clones.
+git config --local pull.rebase true
+git config --local rebase.autoStash true
+
 # The live Z2M config holds secrets that mustn't leak. Mark it
 # skip-worktree so git ignores the working-tree (secret) version
 # entirely: `git add -A` won't pick it up, and `pull --rebase` won't
