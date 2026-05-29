@@ -287,7 +287,7 @@
       - light.living_room
       - light.bathroom_light
       - light.laundry_room_light
-      - light.kitchenette_lamp
+      - light.kitchenette_light
       - light.bedroom_light
     action: light.turn_off
   - target:

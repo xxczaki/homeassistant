@@ -10,7 +10,7 @@
 
 - **Tracked** (have motion sensors, participate in `input_select.current_room`): `living_room`, `bathroom`, `laundry_room`.
 - **Transit zone** (has motion sensor, does NOT set current_room): `hallway`.
-- **Sub-areas of the living room** (no own PIR): kitchenette, bedroom nook. Lit by `light.kitchenette_lamp` (kitchenette ceiling, 3-slot fixture grouping `light.kitchenette_lamp_1` + `light.kitchenette_lamp_2`) and `light.bedroom_light` (nook); both are members of the `light.living_room` group.
+- **Sub-areas of the living room** (no own PIR): kitchenette, bedroom nook. Lit by `light.kitchenette_light` (kitchenette ceiling, 3-slot fixture grouping `light.kitchenette_light_1` + `light.kitchenette_light_2` + `light.kitchenette_light_3`, the third slot filled by the relocated ex-hallway bulb) and `light.bedroom_light` (nook); both are members of the `light.living_room` group. The hallway itself is now lit by `light.hallway_light`, a group of two 1100 lm bulbs (`light.hallway_light_1` + `light.hallway_light_2`).
 
 ## Master kill switch
 
