@@ -31,6 +31,13 @@ views:
             heading: Lights
             heading_style: title
             icon: mdi:lightbulb-multiple
+          - type: button
+            name: Reset to adaptive
+            icon: mdi:theme-light-dark
+            show_state: false
+            tap_action:
+              action: perform-action
+              perform_action: script.reset_lights_to_adaptive
           - type: picture-elements
             image: /local/images/floorplan-light.png
             dark_mode_image: /local/images/floorplan-dark.png
@@ -82,7 +89,7 @@ views:
                 icon: mdi:lightbulb
                 style:
                   left: "88%"
-                  top: "85%"
+                  top: "81%"
                 tap_action:
                   action: toggle
           - type: custom:mushroom-light-card

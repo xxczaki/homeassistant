@@ -1,0 +1,19 @@
+# Snap every Adaptive Lighting ("Home") light back onto the time-of-day
+# curve and hand control back to AL. Needed because take_over_control is
+# on (configuration.yaml): once a light is touched manually, AL stops
+# adapting it. set_manual_control clears that flag (resume automatic);
+# apply forces the brightness/color change right now instead of waiting up
+# to one `interval` (90s) for the next adaptation tick.
+reset_lights_to_adaptive:
+  alias: Reset lights to adaptive
+  icon: mdi:theme-light-dark
+  sequence:
+    - action: adaptive_lighting.set_manual_control
+      data:
+        entity_id: switch.adaptive_lighting_home
+        manual_control: false
+    - action: adaptive_lighting.apply
+      data:
+        entity_id: switch.adaptive_lighting_home
+        # only re-adapt lights that are already on; don't flip on dark rooms
+        turn_on_lights: false
