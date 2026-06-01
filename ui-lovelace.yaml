@@ -128,6 +128,8 @@ views:
             icon_color: blue
             layout: horizontal
             fill_container: true
+            grid_options:
+              columns: full
             tap_action:
               action: perform-action
               perform_action: script.reset_lights_to_adaptive
