@@ -116,15 +116,34 @@
         living_room: light.living_room
         bathroom: light.bathroom_light
         laundry_room: light.laundry_room_light
-  # Always update current_room, even when the daylight gate skips the
-  # light. Otherwise daylight LR motion leaves current_room pinned on the
+  # Update current_room, even when the daylight gate skips the light.
+  # Otherwise daylight LR motion leaves current_room pinned on the
   # previous room and room_cleanup_after_settle never fires – the previous
   # room's light gets orphaned (e.g. bathroom stays on for hours).
-  - target:
-      entity_id: input_select.current_room
-    data:
-      option: "{{ new_room }}"
-    action: input_select.select_option
+  #
+  # Co-fire guard (bug 2026-06-17): only commit the room switch when this
+  # is the ONLY tracked room reporting motion. A single occupant cannot be
+  # in two tracked rooms at once (model assumption #1), so two tracked PIRs
+  # on at the same instant is sensor cross-fire, not a real transition. A
+  # transient bathroom blip co-fired with the LR PIR while the user sat
+  # still in the living room; current_room flipped to bathroom and Layer 1b
+  # then turned the LR off on a seated user. When the reading is ambiguous,
+  # hold current_room – a genuine transition clears the old room's PIR
+  # first (the next motion edge in the new room then commits the switch).
+  - if:
+    - condition: template
+      value_template: >-
+        {% set ns = namespace(others_on=false) %}
+        {% for room in ['living_room', 'bathroom', 'laundry_room'] if room != trigger.id %}
+        {% if is_state('binary_sensor.' ~ room ~ '_motion_occupancy', 'on') %}{% set ns.others_on = true %}{% endif %}
+        {% endfor %}
+        {{ not ns.others_on }}
+    then:
+    - target:
+        entity_id: input_select.current_room
+      data:
+        option: "{{ new_room }}"
+      action: input_select.select_option
   # LR-only daylight gate: skip turning on the living room lamp when the
   # PIR's own illuminance reading is at or above the threshold slider.
   # Other rooms (bathroom, laundry) have no usable daylight so they stay

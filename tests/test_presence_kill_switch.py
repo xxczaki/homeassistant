@@ -42,7 +42,10 @@ async def test_layer_1b_cleanup_does_not_fire_when_disabled(presence_hass):
     hass = presence_hass
 
     # Set up a pending cleanup: enter LR, then bathroom (current_room flips).
+    # LR PIR clears as the user leaves so the co-fire guard commits the
+    # switch (only one tracked room reporting motion).
     await motion(hass, "living_room", on=True)
+    await motion(hass, "living_room", on=False)
     await motion(hass, "bathroom", on=True)
     assert current_room(hass) == "bathroom"
     assert light(hass, "living_room") == "on"
