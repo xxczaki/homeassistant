@@ -30,6 +30,10 @@ Use case: guests over, hosting, anything where the model would mis-interpret tra
 
 A room's light turns on when **its** motion sensor fires `on`, AND `presence_enabled` is `on`. Automation: `room_light_on_and_track` (Layer 1).
 
+### Co-fire guard
+
+`current_room` only updates when the triggering room is the **only** tracked room reporting motion. Per assumption #1 a single occupant cannot be in two tracked rooms at once, so two tracked PIRs `on` at the same instant is sensor cross-fire, not a transition – Layer 1 holds `current_room` and skips the switch. A genuine transition clears the previous room's PIR before the new room fires, so it is unaffected; the light itself still turns on unconditionally (subject to the daylight gate), only the room-tracking switch is gated. Without this, a transient far-room blip while you sit still steals `current_room`, and R1b then turns off the room you are actually in (bug 2026-06-17).
+
 ## Turn-off rules
 
 A room's light turns off when **any** of the following happens (and `presence_enabled` is `on`):
@@ -78,6 +82,7 @@ Intentionally absent. Pure presence: a room's light stays on as long as it's the
 | 10  | Cat hangs out in hallway > 90 s while user on bed            | LR would turn off (false positive). Known edge case under single-person assumption violation.                                                        | R2 false positive                                             |
 | 11  | Hanging laundry, back-and-forth between laundry and hallway  | Laundry stays on; hallway light stays on as long as motion within 60 s; LR off after grace from laundry-entry                                        | R4, R1b                                                       |
 | 12  | Friends over, presence disabled                              | Nothing presence-related fires; lights are entirely under manual control                                                                             | Kill switch                                                   |
+| 13  | Seated in LR; bathroom PIR blips while LR PIR still on        | `current_room` stays `living_room`; LR stays on past grace; the ambiguous co-fire is ignored                                                         | Co-fire guard                                                 |
 
 ## Tuning knobs
 
