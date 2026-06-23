@@ -256,8 +256,11 @@ views:
               - auto
             show_temperature_control: true
             collapsible_controls: false
-            fill_container: false
-            layout: vertical
+            fill_container: true
+            layout: horizontal
+            grid_options:
+              columns: full
+              rows: 2
 
       # Plants
       - type: grid
