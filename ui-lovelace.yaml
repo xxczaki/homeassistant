@@ -236,6 +236,29 @@ views:
               - value: 35
                 color: "#ef4444"
 
+      # Climate
+      - type: grid
+        cards:
+          - type: heading
+            heading: Climate
+            heading_style: title
+            icon: mdi:air-conditioner
+          - type: custom:mushroom-climate-card
+            entity: climate.152832117816646_climate
+            name: Air Conditioner
+            icon: mdi:air-conditioner
+            hvac_modes:
+              - "off"
+              - cool
+              - heat
+              - dry
+              - fan_only
+              - auto
+            show_temperature_control: true
+            collapsible_controls: false
+            fill_container: false
+            layout: vertical
+
       # Plants
       - type: grid
         cards:
