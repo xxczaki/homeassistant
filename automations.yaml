@@ -206,18 +206,50 @@
   actions:
   - variables:
       current: "{{ states('input_select.current_room') }}"
+      # Presence-confirm the room we're about to KEEP before nuking the
+      # others. current_room is confirmed when its own PIR is live, OR when
+      # it's the living room.
+      #
+      # Why the LR is exempt: it's home base and its PIR has a documented
+      # blind spot – a still occupant reads as 'off' (see test_blind_spot).
+      # Gating LR-driven cleanup on the LR PIR would strand bathroom/laundry
+      # lights on every time you settle motionless on the sofa. Turning OTHER
+      # rooms off while current_room is the LR is always safe.
+      #
+      # Why bathroom/laundry are NOT exempt (bug 2026-06-2x): a transient
+      # 15-20 s PIR blip there (sensor cross-fire) flips current_room while
+      # the user is actually sat in the LR. The co-fire guard in Layer 1
+      # blocks the *simultaneous* case, but a lone blip during an LR PIR
+      # off-window slips through, and the subsequent LR re-fire can't self-
+      # heal because the blip is still on. 180 s later R1b turned the LR off
+      # on a seated user. Requiring current_room's own PIR to be live means a
+      # blip that has already cleared can't be trusted to darken the room you
+      # are really in – a genuine stay keeps that PIR firing.
+      confirmed: >-
+        {{ current == 'living_room'
+           or is_state('binary_sensor.' ~ current ~ '_motion_occupancy', 'on') }}
       rooms:
         living_room: light.living_room
         bathroom: light.bathroom_light
         laundry_room: light.laundry_room_light
-  - repeat:
-      for_each: "{{ rooms.keys() | reject('eq', current) | list }}"
-      sequence:
-      - condition: template
-        value_template: "{{ is_state(rooms[repeat.item], 'on') }}"
-      - target:
-          entity_id: "{{ rooms[repeat.item] }}"
-        action: light.turn_off
+  - if:
+    - condition: template
+      value_template: "{{ confirmed }}"
+    then:
+    - repeat:
+        for_each: "{{ rooms.keys() | reject('eq', current) | list }}"
+        sequence:
+        - if:
+          # Turn a room off only when its light is on (else no-op) AND its
+          # PIR is currently off. Never darken a room still reporting motion.
+          - condition: template
+            value_template: >-
+              {{ is_state(rooms[repeat.item], 'on')
+                 and is_state('binary_sensor.' ~ repeat.item ~ '_motion_occupancy', 'off') }}
+          then:
+          - target:
+              entity_id: "{{ rooms[repeat.item] }}"
+            action: light.turn_off
   mode: single
 - id: hallway_dwell_turnoff
   alias: 'Presence: Hallway dwell -> turn off current room (Layer 2)'
