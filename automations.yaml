@@ -298,9 +298,9 @@
   alias: 'Presence: Leave home -> all lights off'
   description: >-
     Primary: person.antek not_home for 2 minutes (WiFi-based via UniFi).
-    Fallback: all motion sensors off for 10 minutes (if person is not home).
-    Turns everything off. No snapshot/restore – on return, room motion
-    just triggers Layer 1 normally.
+    Fallback: all motion sensors off for 10 minutes AND person.antek is
+    affirmatively not_home. Turns everything off. No snapshot/restore – on
+    return, room motion just triggers Layer 1 normally.
   triggers:
   - entity_id: person.antek
     to: not_home
@@ -326,11 +326,18 @@
       conditions:
       - condition: trigger
         id: no_motion
-      - condition: not
-        conditions:
-        - condition: state
-          entity_id: person.antek
-          state: home
+      # Require an affirmative not_home, never "anything but home"
+      # (bug 2026-08-18): UniFi kept re-creating the phone's entity on
+      # private-MAC rotation until person.antek lost its tracker links
+      # and stuck at 'unknown'. The old not(home) condition treated that
+      # as away, so every 10-min still-sitting window (LR PIR blind
+      # spot) fired leave-home – 23 all-lights-off events in one day
+      # with the user on the sofa. 'unknown' means NO data: refusing to
+      # darken the house on no data costs at most some wasted watts
+      # while genuinely away, never a blackout on an occupant.
+      - condition: state
+        entity_id: person.antek
+        state: not_home
   actions:
   - target:
       entity_id:

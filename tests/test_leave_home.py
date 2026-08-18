@@ -2,8 +2,9 @@
 
 Two trigger paths, OR-conditioned:
   1. person.antek transitions to 'not_home' for 2 minutes (primary).
-  2. all motion sensors off for 10 minutes AND person.antek != 'home'
-     (fallback for when the tracker mis-reports).
+  2. all motion sensors off for 10 minutes AND person.antek is
+     affirmatively 'not_home' (fallback for missed motion, NOT for a
+     broken tracker – see the 2026-08-18 regression below).
 
 On either path: every tracked light off, current_room → none.
 """
@@ -32,35 +33,65 @@ async def test_person_not_home_for_two_min_turns_everything_off(presence_hass):
 
 
 async def test_no_motion_for_ten_min_with_person_away_turns_off(presence_hass):
-    """The fallback path: tracker is wrong/stuck, but motion has been
-    silent for 10 min and person isn't 'home' – clean up."""
+    """The fallback path: person is affirmatively not_home, a light was
+    left on (or re-lit) after the primary already ran, and motion has
+    been silent for 10 min – clean up.
+
+    To isolate the fallback, let the primary path fire first on an
+    empty home (no-op), then re-light the LR: the primary won't re-fire
+    without a fresh transition to not_home, so the later turn-off can
+    only come from the no-motion fallback."""
     hass = presence_hass
 
-    # Light up LR, then mark person as away
+    # Person leaves; primary fires after 2 min on an already-dark home.
+    hass.states.async_set("person.antek", "not_home")
+    await hass.async_block_till_done()
+    await advance(hass, seconds=125)
+
+    # A light comes back on while person is still not_home (guest,
+    # missed arrival, cat on the sensor) and motion goes silent again.
     await motion(hass, "living_room", on=True)
     await motion(hass, "living_room", on=False)
     assert light(hass, "living_room") == "on"
-
-    hass.states.async_set("person.antek", "not_home")
+    # Let the all_rooms_motion group sensor process the on->off cycle so
+    # the fallback's 10-min `for:` timer is armed BEFORE the time jump.
     await hass.async_block_till_done()
 
-    # Don't advance enough to trigger the primary 2-min path? Actually
-    # the primary path fires first (after 120 s). To exercise ONLY the
-    # no-motion fallback we'd need person to be in some not-'home',
-    # not-'not_home' value (e.g. 'unknown'). Set it to 'unknown' so
-    # primary trigger ('to: not_home') doesn't fire.
-    hass.states.async_set("person.antek", "unknown")
-    await hass.async_block_till_done()
-
-    # Wait 10 min + slack for the no-motion template trigger.
-    # Real-time runtime of this advance is not great because HA processes
-    # every internal periodic task in the window – acceptable for a
-    # single regression test of the fallback path.
+    # Wait 10 min + slack for the no-motion fallback.
     await advance(hass, seconds=10 * 60 + 10)
 
     # All lights off via the fallback path
     assert light(hass, "living_room") == "off"
     assert current_room(hass) == "none"
+
+
+async def test_person_unknown_never_fires_fallback(presence_hass):
+    """Regression: the 2026-08-18 'lights keep dying on me' incident.
+
+    UniFi re-created the phone's device_tracker entity on private-MAC
+    rotation until person.antek lost every tracker link and stuck at
+    'unknown'. The fallback condition was not(state == 'home'), which
+    treats 'unknown' as away – so each 10-min still-sitting window (LR
+    PIR blind spot) fired leave-home: 23 all-lights-off events in one
+    day with the user on the sofa.
+
+    'unknown' means no data. Only an affirmative 'not_home' may darken
+    the house."""
+    hass = presence_hass
+
+    # Settled in the LR, tracker gives no data.
+    await motion(hass, "living_room", on=True)
+    await motion(hass, "living_room", on=False)
+    assert light(hass, "living_room") == "on"
+
+    hass.states.async_set("person.antek", "unknown")
+    await hass.async_block_till_done()
+
+    # Well past the 10-min no-motion window: nothing may turn off.
+    await advance(hass, seconds=10 * 60 + 30)
+
+    assert light(hass, "living_room") == "on"
+    assert current_room(hass) == "living_room"
 
 
 async def test_returning_after_leave_lights_room_on_via_motion(presence_hass):
