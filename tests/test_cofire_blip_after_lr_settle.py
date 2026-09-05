@@ -100,11 +100,18 @@ async def test_occupied_target_room_is_not_darkened(presence_hass):
     hass = presence_hass
     await set_grace(hass, 45)
 
-    # Settle in the LR; the LR PIR stays on. A bathroom PIR then co-fires
-    # while the LR PIR is still live: the Layer 1 co-fire guard HOLDS
-    # current_room at living_room, but Layer 1 still turns the bathroom light
-    # on. Net: current_room=LR, bathroom light on, bathroom PIR live.
+    # A genuine bathroom visit lights the bathroom; the user then returns to
+    # the LR and current_room follows. The bathroom PIR comes back on while
+    # the LR PIR is still live, so the co-fire guard HOLDS current_room at
+    # living_room and refuses to re-light the bathroom – but the lamp is
+    # already on from the real visit. Net: current_room=LR, bathroom light on,
+    # bathroom PIR live.
+    await motion(hass, "bathroom", on=True)
+    assert light(hass, "bathroom_light") == "on"
+    await motion(hass, "bathroom", on=False)
     await motion(hass, "living_room", on=True)
+    assert current_room(hass) == "living_room"
+
     await motion(hass, "bathroom", on=True)
     assert current_room(hass) == "living_room"
     assert light(hass, "bathroom_light") == "on"

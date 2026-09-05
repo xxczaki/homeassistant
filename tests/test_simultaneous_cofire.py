@@ -71,3 +71,40 @@ async def test_cofire_does_not_block_switch_once_old_room_clears(presence_hass):
     await motion(hass, "bathroom", on=True)
     assert current_room(hass) == "bathroom"
     assert light(hass, "bathroom_light") == "on"
+
+
+async def test_cofire_blip_does_not_light_the_blipping_room(presence_hass):
+    """An ambiguous edge must not light a room either (2026-09-05).
+
+    Recorder trace, repeated three times that day:
+      13:40:01 LR PIR on (user seated in the living room)
+      13:40:07 bathroom PIR co-fires on
+      13:40:07 Layer 1 turns light.bathroom_light ON, current_room correctly
+               held at living_room by the guard
+      -------- Layer 1b triggers on a current_room *change*, so a held
+               current_room means nothing ever cleans the lamp up
+
+    Guarding only current_room left the light action reachable, so the
+    blip orphaned the bathroom lamp until it was killed by hand.
+    """
+    hass = presence_hass
+    await set_grace(hass, 45)
+
+    await motion(hass, "living_room", on=True)
+    assert current_room(hass) == "living_room"
+    assert light(hass, "living_room") == "on"
+
+    # The bathroom PIR co-fires while the LR PIR is still live. Neither the
+    # room claim nor the lamp may follow an ambiguous reading.
+    await motion(hass, "bathroom", on=True)
+    assert current_room(hass) == "living_room"
+    assert light(hass, "bathroom_light") == "off"
+
+    # The blip clears and the seated user stops producing motion edges –
+    # there is no further current_room change for R1b to fire on.
+    await motion(hass, "bathroom", on=False)
+    await motion(hass, "living_room", on=False)
+
+    await advance(hass, seconds=50)
+    assert light(hass, "bathroom_light") == "off"
+    assert light(hass, "living_room") == "on"

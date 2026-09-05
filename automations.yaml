@@ -116,28 +116,29 @@
         living_room: light.living_room
         bathroom: light.bathroom_light
         laundry_room: light.laundry_room_light
-  # Update current_room, even when the daylight gate skips the light.
-  # Otherwise daylight LR motion leaves current_room pinned on the
-  # previous room and room_cleanup_after_settle never fires – the previous
-  # room's light gets orphaned (e.g. bathroom stays on for hours).
-  #
-  # Co-fire guard (bug 2026-06-17): only commit the room switch when this
-  # is the ONLY tracked room reporting motion. A single occupant cannot be
-  # in two tracked rooms at once (model assumption #1), so two tracked PIRs
-  # on at the same instant is sensor cross-fire, not a real transition. A
-  # transient bathroom blip co-fired with the LR PIR while the user sat
-  # still in the living room; current_room flipped to bathroom and Layer 1b
-  # then turned the LR off on a seated user. When the reading is ambiguous,
-  # hold current_room – a genuine transition clears the old room's PIR
-  # first (the next motion edge in the new room then commits the switch).
-  - if:
-    - condition: template
-      value_template: >-
+      # Co-fire guard (bug 2026-06-17): this motion edge is only a
+      # trustworthy transition when the triggering room is the ONLY tracked
+      # room reporting motion. A single occupant cannot be in two tracked
+      # rooms at once (model assumption #1), so two tracked PIRs on at the
+      # same instant is sensor cross-fire, not a real move. A transient
+      # bathroom blip co-fired with the LR PIR while the user sat still in
+      # the living room; current_room flipped to bathroom and Layer 1b then
+      # turned the LR off on a seated user. When the reading is ambiguous,
+      # hold – a genuine transition clears the old room's PIR first (the
+      # next motion edge in the new room then commits).
+      unambiguous: >-
         {% set ns = namespace(others_on=false) %}
         {% for room in ['living_room', 'bathroom', 'laundry_room'] if room != trigger.id %}
         {% if is_state('binary_sensor.' ~ room ~ '_motion_occupancy', 'on') %}{% set ns.others_on = true %}{% endif %}
         {% endfor %}
         {{ not ns.others_on }}
+  # Update current_room, even when the daylight gate skips the light.
+  # Otherwise daylight LR motion leaves current_room pinned on the
+  # previous room and room_cleanup_after_settle never fires – the previous
+  # room's light gets orphaned (e.g. bathroom stays on for hours).
+  - if:
+    - condition: template
+      value_template: "{{ unambiguous }}"
     then:
     - target:
         entity_id: input_select.current_room
@@ -157,13 +158,22 @@
   # the real darkness by hundreds of ms after re-entry – just long enough
   # to lose the race against the motion trigger. Daylight gating has no
   # purpose at night anyway: there is no daylight.
+  #
+  # The co-fire guard applies here too (bug 2026-09-05): it used to gate
+  # only current_room, so a bathroom cross-fire blip during an LR sit still
+  # turned the bathroom lamp ON while current_room correctly held at
+  # living_room. Layer 1b triggers on a current_room *change*, so a held
+  # current_room means cleanup never runs and the lamp is orphaned until
+  # someone kills it by hand – three times on 2026-09-05 alone. An
+  # ambiguous edge must not light a room any more than it may claim one.
   - if:
     - condition: template
       value_template: >-
-        {{ trigger.id != 'living_room'
-           or is_state('sun.sun', 'below_horizon')
-           or states('sensor.living_room_motion_illuminance')|float(0)
-              < states('input_number.light_on_lux_threshold')|float(50) }}
+        {{ unambiguous
+           and (trigger.id != 'living_room'
+                or is_state('sun.sun', 'below_horizon')
+                or states('sensor.living_room_motion_illuminance')|float(0)
+                   < states('input_number.light_on_lux_threshold')|float(50)) }}
     then:
     - target:
         entity_id: "{{ rooms[new_room] }}"
