@@ -7,10 +7,7 @@ Reconstructed from the recorder DB (two near-identical occurrences,
         blind spot, see test_blind_spot)
   a transient 15-20 s bathroom/laundry PIR blip fires (sensor cross-fire)
         while the LR PIR is in an off-window -> Layer 1 commits
-        current_room=bathroom (the co-fire guard only blocks the
-        *simultaneous* case; a lone blip slips through)
-  ~5 s later the LR PIR fires again (the user IS there) but the blip is
-        still on, so the co-fire guard suppresses the self-heal
+        current_room=bathroom
   the blip clears; the LR PIR then stays quiet
   +180 s: R1b turns light.living_room OFF on a user who never left.
 
@@ -19,6 +16,12 @@ on the *target* room can't catch this. The reliable signal is the other
 side: current_room=bathroom but the bathroom PIR is dead – nobody is
 actually in the room R1b is keeping. R1b must confirm presence in
 current_room (its PIR live, or it's the LR) before darkening the rest.
+
+Since 2026-09-05 this presence-confirm gate is the *only* protection
+against cross-fire harm – the Layer 1 co-fire guard that used to sit
+upstream was removed for suppressing genuine transits (see
+test_simultaneous_cofire). These tests are consequently the load-bearing
+ones for the 06-2x incidents; treat a failure here as a live regression.
 """
 
 from .helpers import advance, current_room, light, motion, set_grace
@@ -100,19 +103,14 @@ async def test_occupied_target_room_is_not_darkened(presence_hass):
     hass = presence_hass
     await set_grace(hass, 45)
 
-    # A genuine bathroom visit lights the bathroom; the user then returns to
-    # the LR and current_room follows. The bathroom PIR comes back on while
-    # the LR PIR is still live, so the co-fire guard HOLDS current_room at
-    # living_room and refuses to re-light the bathroom – but the lamp is
-    # already on from the real visit. Net: current_room=LR, bathroom light on,
-    # bathroom PIR live.
+    # Bathroom motion lights the bathroom and claims the room. An LR edge
+    # then arrives while the bathroom PIR is still latched on, and last edge
+    # wins, so current_room moves back to the LR. Net: current_room=LR,
+    # bathroom light on, bathroom PIR still live.
     await motion(hass, "bathroom", on=True)
     assert light(hass, "bathroom_light") == "on"
-    await motion(hass, "bathroom", on=False)
-    await motion(hass, "living_room", on=True)
-    assert current_room(hass) == "living_room"
 
-    await motion(hass, "bathroom", on=True)
+    await motion(hass, "living_room", on=True)
     assert current_room(hass) == "living_room"
     assert light(hass, "bathroom_light") == "on"
 
