@@ -1,0 +1,27 @@
+automation:
+  - id: git_pull_restart_after_crash
+    alias: Restart the Git pull add-on after a crash
+    description: >-
+      The Git pull add-on exits with "FATAL: Git fetch failed" when it cannot
+      reach github.com (the nightly internet reconnect breaks DNS), and the
+      Supervisor watchdog gives up while the connection is still down. Start
+      it again once it has been stopped for 10 minutes, and keep retrying
+      every 30 minutes until a start sticks. Requires the Supervisor entity
+      binary_sensor.git_pull_running to be enabled (disabled by default).
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.git_pull_running
+        to: "off"
+        for:
+          minutes: 10
+      - trigger: time_pattern
+        minutes: /30
+    conditions:
+      - condition: state
+        entity_id: binary_sensor.git_pull_running
+        state: "off"
+    actions:
+      - action: hassio.addon_start
+        data:
+          addon: core_git_pull
