@@ -157,6 +157,15 @@
   # the real darkness by hundreds of ms after re-entry – just long enough
   # to lose the race against the motion trigger. Daylight gating has no
   # purpose at night anyway: there is no daylight.
+  #
+  # Fresh-lux re-check (bug 2026-10-17): the same race happens before
+  # sunset. R1b turned the lamp off at 15:55:31 UTC; at 15:55:39.079 the
+  # PIR fired on re-entry while the lux state still held the lamp-lit
+  # 161 lx, and the real 4 lx reading landed 51 ms later – after the gate
+  # had already skipped the lamp (sunset was 16:11). So when the gate says
+  # "too bright", wait briefly for the reading that accompanies this
+  # motion event and decide again. The normal path (dark room) is not
+  # delayed; a genuinely bright room just costs a 2 s no-op wait.
   - if:
     - condition: template
       value_template: >-
@@ -168,6 +177,22 @@
     - target:
         entity_id: "{{ rooms[new_room] }}"
       action: light.turn_on
+    else:
+    - wait_for_trigger:
+      - trigger: state
+        entity_id: sensor.living_room_motion_illuminance
+      timeout:
+        seconds: 2
+      continue_on_timeout: true
+    - if:
+      - condition: template
+        value_template: >-
+          {{ states('sensor.living_room_motion_illuminance')|float(0)
+             < states('input_number.light_on_lux_threshold')|float(50) }}
+      then:
+      - target:
+          entity_id: "{{ rooms[new_room] }}"
+        action: light.turn_on
   mode: single
 - id: room_cleanup_after_settle
   alias: 'Presence: Cleanup non-current rooms after settle (Layer 1b)'
