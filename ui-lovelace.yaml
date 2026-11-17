@@ -366,40 +366,19 @@ views:
             heading: Car
             heading_style: title
             icon: mdi:car
-          - type: picture
-            image_entity: image.skoda_kamiq_main_render_of_vehicle
-            alt_text: Main Render of Vehicle
-          - type: horizontal-stack
+          - type: grid
+            columns: 3
+            square: false
             cards:
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: lock.skoda_kamiq_door_lock
-                    state_not: unavailable
-                card:
-                  type: custom:mushroom-lock-card
-                  entity: lock.skoda_kamiq_door_lock
-                  name: Vehicle Status
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: lock.skoda_kamiq_door_lock
-                    state: unavailable
-                card:
-                  type: custom:mushroom-entity-card
-                  entity: binary_sensor.skoda_kamiq_doors_locked
-                  name: Vehicle Status
-              - type: vertical-stack
-                cards:
-                  - type: custom:mushroom-entity-card
-                    entity: sensor.skoda_kamiq_last_updated
-                    name: Last Update
-                  - type: custom:mushroom-entity-card
-                    entity: sensor.skoda_kamiq_range
-                    name: Range
-                  - type: custom:mushroom-entity-card
-                    entity: sensor.skoda_kamiq_fuel_level
-                    name: Fuel
+              - type: custom:mushroom-entity-card
+                entity: sensor.kamiq_total_range
+                name: Range
+              - type: custom:mushroom-entity-card
+                entity: sensor.kamiq_fuel_level
+                name: Fuel
+              - type: custom:mushroom-entity-card
+                entity: sensor.kamiq_mileage
+                name: Mileage
 
   # ── Network ────────────────────────────────────────────────
   - title: Network
