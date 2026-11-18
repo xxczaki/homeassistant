@@ -1,0 +1,849 @@
+# Two-tab panel for Waveshare ESP32-S3-Touch-LCD-4.3 (SKU 25948, original revision).
+# Requires ESPHome 2026.8.2+ (LVGL 9) and HA permission to perform actions.
+# The preset owns display reset; the binary light owns backlight pin 2.
+substitutions:
+  display_idle_timeout: 120s
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  flash_size: 16MB
+  cpu_frequency: 240MHz
+  framework:
+    type: esp-idf
+psram:
+  mode: octal
+  speed: 80MHz
+logger:
+  level: INFO
+i2c:
+  sda: GPIO8
+  scl: GPIO9
+  scan: true
+  frequency: 400kHz
+ch422g:
+- id: io_expander
+output:
+- platform: gpio
+  id: backlight_output
+  pin:
+    ch422g: io_expander
+    number: 2
+light:
+- platform: binary
+  id: display_backlight
+  output: backlight_output
+  restore_mode: ALWAYS_ON
+  internal: true
+display:
+- platform: mipi_rgb
+  model: ESP32-S3-TOUCH-LCD-4.3
+  id: panel_display
+  enable_pin: []
+  update_interval: never
+  auto_clear_enabled: false
+touchscreen:
+- platform: gt911
+  id: panel_touch
+  display: panel_display
+  interrupt_pin: GPIO4
+  reset_pin:
+    ch422g: io_expander
+    number: 1
+  on_touch:
+  - logger.log:
+      level: DEBUG
+      format: 'Touch: x=%d y=%d'
+      args:
+      - touch.x
+      - touch.y
+image:
+- platform: file
+  file: ../www/images/floorplan-dark.png
+  id: floorplan
+  resize: 552x233
+  type: RGB565
+lvgl:
+  id: panel_ui
+  # LVGL resumes on touch release, consuming the tap that wakes the panel.
+  resume_on_input: true
+  on_idle:
+    timeout: ${display_idle_timeout}
+    then:
+    - lvgl.pause:
+  on_pause:
+  - light.turn_off: display_backlight
+  - logger.log:
+      level: INFO
+      format: Display sleeping after inactivity
+  on_resume:
+  - light.turn_on: display_backlight
+  - logger.log:
+      level: INFO
+      format: Display awake
+  displays:
+  - panel_display
+  touchscreens:
+  - panel_touch
+  buffer_size: 25%
+  color_depth: 16
+  default_font: montserrat_18
+  bg_color: 1054752
+  text_color: 15857145
+  widgets:
+  - tabview:
+      id: main_tabs
+      x: 0
+      y: 0
+      width: 800
+      height: 480
+      size: 48
+      pad_all: 0
+      bg_color: 1054752
+      tab_style:
+        bg_color: 1911093
+        items:
+          text_color: 10859457
+          checked:
+            bg_opa: COVER
+            bg_color: 5822661
+            text_color: 1054752
+      content_style:
+        pad_all: 0
+        bg_color: 1054752
+      tabs:
+      - name: Energy
+        pad_all: 0
+        scrollable: false
+        bg_color: 1054752
+        widgets:
+        - label:
+            text: HOME ENERGY
+            x: 16
+            y: 16
+            text_font: montserrat_16
+            text_color: 10859457
+        - label:
+            text: Shelly Pro 3EM
+            x: 570
+            y: 16
+            text_font: montserrat_16
+            text_color: 10859457
+            width: 210
+            long_mode: DOT
+        - obj:
+            x: 16
+            y: 50
+            width: 768
+            height: 140
+            bg_color: 1911093
+            border_width: 0
+            radius: 12
+            pad_all: 0
+            scrollable: false
+            widgets:
+            - label:
+                text: Power now
+                x: 20
+                y: 16
+                text_font: montserrat_18
+                text_color: 10859457
+            - label:
+                text: -- W
+                x: 20
+                y: 49
+                text_font: montserrat_48
+                text_color: 15857145
+                id: power_value
+            - label:
+                text: Live total across all three phases
+                x: 395
+                y: 78
+                text_font: montserrat_16
+                text_color: 10859457
+                width: 350
+                long_mode: DOT
+        - obj:
+            x: 16
+            y: 204
+            width: 248
+            height: 90
+            bg_color: 1911093
+            border_width: 0
+            radius: 12
+            pad_all: 0
+            scrollable: false
+            widgets:
+            - label:
+                text: PHASE A
+                x: 16
+                y: 12
+                text_font: montserrat_14
+                text_color: 10859457
+            - label:
+                text: -- W
+                x: 16
+                y: 39
+                text_font: montserrat_28
+                text_color: 15857145
+                id: phase_a_value
+        - obj:
+            x: 276
+            y: 204
+            width: 248
+            height: 90
+            bg_color: 1911093
+            border_width: 0
+            radius: 12
+            pad_all: 0
+            scrollable: false
+            widgets:
+            - label:
+                text: PHASE B
+                x: 16
+                y: 12
+                text_font: montserrat_14
+                text_color: 10859457
+            - label:
+                text: -- W
+                x: 16
+                y: 39
+                text_font: montserrat_28
+                text_color: 15857145
+                id: phase_b_value
+        - obj:
+            x: 536
+            y: 204
+            width: 248
+            height: 90
+            bg_color: 1911093
+            border_width: 0
+            radius: 12
+            pad_all: 0
+            scrollable: false
+            widgets:
+            - label:
+                text: PHASE C
+                x: 16
+                y: 12
+                text_font: montserrat_14
+                text_color: 10859457
+            - label:
+                text: -- W
+                x: 16
+                y: 39
+                text_font: montserrat_28
+                text_color: 15857145
+                id: phase_c_value
+        - obj:
+            x: 16
+            y: 308
+            width: 378
+            height: 78
+            bg_color: 1911093
+            border_width: 0
+            radius: 12
+            pad_all: 0
+            scrollable: false
+            widgets:
+            - label:
+                text: Total imported
+                x: 16
+                y: 10
+                text_font: montserrat_14
+                text_color: 10859457
+            - label:
+                text: -- kWh
+                x: 16
+                y: 33
+                text_font: montserrat_24
+                text_color: 15857145
+                id: import_value
+        - obj:
+            x: 406
+            y: 308
+            width: 378
+            height: 78
+            bg_color: 1911093
+            border_width: 0
+            radius: 12
+            pad_all: 0
+            scrollable: false
+            widgets:
+            - label:
+                text: Total returned
+                x: 16
+                y: 10
+                text_font: montserrat_14
+                text_color: 10859457
+            - label:
+                text: -- kWh
+                x: 16
+                y: 33
+                text_font: montserrat_24
+                text_color: 15857145
+                id: export_value
+        - label:
+            text: Cumulative meter counters, not daily consumption.
+            x: 16
+            y: 400
+            text_font: montserrat_14
+            text_color: 10859457
+      - name: Presence & lights
+        pad_all: 0
+        scrollable: false
+        bg_color: 1054752
+        widgets:
+        - label:
+            text: PRESENCE & LIGHTS
+            x: 16
+            y: 16
+            text_font: montserrat_16
+            text_color: 10859457
+        - label:
+            text: 'Location: --'
+            x: 16
+            y: 46
+            text_font: montserrat_18
+            text_color: 15857145
+            width: 350
+            long_mode: DOT
+            id: location_value
+        - label:
+            text: 'Room: --'
+            x: 16
+            y: 73
+            text_font: montserrat_16
+            text_color: 10859457
+            width: 350
+            long_mode: DOT
+            id: room_value
+        - button:
+            id: auto_button
+            x: 552
+            y: 12
+            width: 230
+            height: 50
+            bg_color: 3424850
+            radius: 10
+            pad_all: 0
+            shadow_width: 0
+            widgets:
+            - label:
+                text: 'Automation: --'
+                align: CENTER
+                text_font: montserrat_16
+            on_click:
+            - if:
+                condition:
+                  and:
+                  - api.connected:
+                      state_subscription_only: true
+                  - lambda: !lambda |-
+                      return id(state_auto_button).state == "on" || id(state_auto_button).state == "off";
+                then:
+                - homeassistant.action:
+                    action: input_boolean.toggle
+                    data:
+                      entity_id: input_boolean.presence_enabled
+        - image:
+            src: floorplan
+            x: 16
+            y: 115
+        - button:
+            id: bed
+            x: 365
+            y: 186
+            width: 52
+            height: 44
+            bg_color: 3424850
+            radius: 10
+            pad_all: 0
+            shadow_width: 0
+            widgets:
+            - label:
+                text: Bed
+                align: CENTER
+                text_font: montserrat_16
+            on_click:
+            - if:
+                condition:
+                  and:
+                  - api.connected:
+                      state_subscription_only: true
+                  - lambda: !lambda |-
+                      return id(state_bed).state == "on" || id(state_bed).state == "off";
+                then:
+                - homeassistant.action:
+                    action: light.toggle
+                    data:
+                      entity_id: light.bedroom_light
+        - button:
+            id: kitchen
+            x: 227
+            y: 186
+            width: 52
+            height: 44
+            bg_color: 3424850
+            radius: 10
+            pad_all: 0
+            shadow_width: 0
+            widgets:
+            - label:
+                text: Kit
+                align: CENTER
+                text_font: montserrat_16
+            on_click:
+            - if:
+                condition:
+                  and:
+                  - api.connected:
+                      state_subscription_only: true
+                  - lambda: !lambda |-
+                      return id(state_kitchen).state == "on" || id(state_kitchen).state == "off";
+                then:
+                - homeassistant.action:
+                    action: light.toggle
+                    data:
+                      entity_id: light.kitchenette_light
+        - button:
+            id: strip
+            x: 227
+            y: 275
+            width: 52
+            height: 44
+            bg_color: 3424850
+            radius: 10
+            pad_all: 0
+            shadow_width: 0
+            widgets:
+            - label:
+                text: LED
+                align: CENTER
+                text_font: montserrat_16
+            on_click:
+            - if:
+                condition:
+                  and:
+                  - api.connected:
+                      state_subscription_only: true
+                  - lambda: !lambda |-
+                      return id(state_strip).state == "on" || id(state_strip).state == "off";
+                then:
+                - homeassistant.action:
+                    action: light.toggle
+                    data:
+                      entity_id: light.kitchenette_light_strip
+        - button:
+            id: hall
+            x: 89
+            y: 179
+            width: 52
+            height: 44
+            bg_color: 3424850
+            radius: 10
+            pad_all: 0
+            shadow_width: 0
+            widgets:
+            - label:
+                text: Hall
+                align: CENTER
+                text_font: montserrat_16
+            on_click:
+            - if:
+                condition:
+                  and:
+                  - api.connected:
+                      state_subscription_only: true
+                  - lambda: !lambda |-
+                      return id(state_hall).state == "on" || id(state_hall).state == "off";
+                then:
+                - homeassistant.action:
+                    action: light.toggle
+                    data:
+                      entity_id: light.hallway_light
+        - button:
+            id: bath
+            x: 139
+            y: 249
+            width: 52
+            height: 44
+            bg_color: 3424850
+            radius: 10
+            pad_all: 0
+            shadow_width: 0
+            widgets:
+            - label:
+                text: Bath
+                align: CENTER
+                text_font: montserrat_16
+            on_click:
+            - if:
+                condition:
+                  and:
+                  - api.connected:
+                      state_subscription_only: true
+                  - lambda: !lambda |-
+                      return id(state_bath).state == "on" || id(state_bath).state == "off";
+                then:
+                - homeassistant.action:
+                    action: light.toggle
+                    data:
+                      entity_id: light.bathroom_light
+        - button:
+            id: laundry
+            x: 31
+            y: 251
+            width: 52
+            height: 44
+            bg_color: 3424850
+            radius: 10
+            pad_all: 0
+            shadow_width: 0
+            widgets:
+            - label:
+                text: Wash
+                align: CENTER
+                text_font: montserrat_16
+            on_click:
+            - if:
+                condition:
+                  and:
+                  - api.connected:
+                      state_subscription_only: true
+                  - lambda: !lambda |-
+                      return id(state_laundry).state == "on" || id(state_laundry).state == "off";
+                then:
+                - homeassistant.action:
+                    action: light.toggle
+                    data:
+                      entity_id: light.laundry_room_light
+        - button:
+            id: balcony
+            x: 476
+            y: 282
+            width: 52
+            height: 44
+            bg_color: 3424850
+            radius: 10
+            pad_all: 0
+            shadow_width: 0
+            widgets:
+            - label:
+                text: Bal
+                align: CENTER
+                text_font: montserrat_16
+            on_click:
+            - if:
+                condition:
+                  and:
+                  - api.connected:
+                      state_subscription_only: true
+                  - lambda: !lambda |-
+                      return id(state_balcony).state == "on" || id(state_balcony).state == "off";
+                then:
+                - homeassistant.action:
+                    action: switch.toggle
+                    data:
+                      entity_id: switch.balcony_switch_l1
+        - label:
+            text: MOTION
+            x: 590
+            y: 89
+            text_font: montserrat_14
+            text_color: 10859457
+        - label:
+            text: 'Living room: --'
+            x: 590
+            y: 119
+            text_font: montserrat_16
+            text_color: 15857145
+            width: 194
+            long_mode: DOT
+            id: motion_living_room_value
+        - label:
+            text: 'Hallway: --'
+            x: 590
+            y: 151
+            text_font: montserrat_16
+            text_color: 15857145
+            width: 194
+            long_mode: DOT
+            id: motion_hallway_value
+        - label:
+            text: 'Bathroom: --'
+            x: 590
+            y: 183
+            text_font: montserrat_16
+            text_color: 15857145
+            width: 194
+            long_mode: DOT
+            id: motion_bathroom_value
+        - label:
+            text: 'Laundry: --'
+            x: 590
+            y: 215
+            text_font: montserrat_16
+            text_color: 15857145
+            width: 194
+            long_mode: DOT
+            id: motion_laundry_room_value
+        - label:
+            text: 'Grace: --'
+            x: 590
+            y: 259
+            text_font: montserrat_16
+            text_color: 10859457
+            width: 194
+            long_mode: DOT
+            id: grace_value
+        - label:
+            text: 'Lux now: --'
+            x: 590
+            y: 289
+            text_font: montserrat_16
+            text_color: 10859457
+            width: 194
+            long_mode: DOT
+            id: lux_value
+        - label:
+            text: 'Threshold: --'
+            x: 590
+            y: 319
+            text_font: montserrat_16
+            text_color: 10859457
+            width: 194
+            long_mode: DOT
+            id: threshold_value
+        - button:
+            id: living
+            x: 16
+            y: 364
+            width: 182
+            height: 48
+            bg_color: 3424850
+            radius: 10
+            pad_all: 0
+            shadow_width: 0
+            widgets:
+            - label:
+                text: Living room
+                align: CENTER
+                text_font: montserrat_16
+            on_click:
+            - if:
+                condition:
+                  and:
+                  - api.connected:
+                      state_subscription_only: true
+                  - lambda: !lambda |-
+                      return id(state_living).state == "on" || id(state_living).state == "off";
+                then:
+                - homeassistant.action:
+                    action: light.toggle
+                    data:
+                      entity_id: light.living_room
+        - label:
+            text: Tap a room to toggle its light.
+            x: 218
+            y: 369
+            text_font: montserrat_16
+            text_color: 10859457
+            width: 550
+            long_mode: DOT
+        - label:
+            text: Yellow = on   /   Grey = off   /   Dimmed = unavailable
+            x: 218
+            y: 394
+            text_font: montserrat_14
+            text_color: 10859457
+            width: 560
+            long_mode: DOT
+sensor:
+- platform: homeassistant
+  id: ha_power
+  entity_id: sensor.shellypro3em_00700743391c_power
+  internal: true
+- platform: homeassistant
+  id: ha_phase_a
+  entity_id: sensor.shellypro3em_00700743391c_phase_a_power
+  internal: true
+- platform: homeassistant
+  id: ha_phase_b
+  entity_id: sensor.shellypro3em_00700743391c_phase_b_power
+  internal: true
+- platform: homeassistant
+  id: ha_phase_c
+  entity_id: sensor.shellypro3em_00700743391c_phase_c_power
+  internal: true
+- platform: homeassistant
+  id: ha_import
+  entity_id: sensor.shellypro3em_00700743391c_energy
+  internal: true
+- platform: homeassistant
+  id: ha_export
+  entity_id: sensor.shellypro3em_00700743391c_energy_returned
+  internal: true
+- platform: homeassistant
+  id: ha_grace
+  entity_id: input_number.presence_grace_seconds
+  internal: true
+- platform: homeassistant
+  id: ha_lux
+  entity_id: sensor.living_room_motion_illuminance
+  internal: true
+- platform: homeassistant
+  id: ha_threshold
+  entity_id: input_number.light_on_lux_threshold
+  internal: true
+text_sensor:
+- platform: homeassistant
+  id: state_auto_button
+  entity_id: input_boolean.presence_enabled
+  internal: true
+- platform: homeassistant
+  id: state_living
+  entity_id: light.living_room
+  internal: true
+- platform: homeassistant
+  id: state_bed
+  entity_id: light.bedroom_light
+  internal: true
+- platform: homeassistant
+  id: state_kitchen
+  entity_id: light.kitchenette_light
+  internal: true
+- platform: homeassistant
+  id: state_strip
+  entity_id: light.kitchenette_light_strip
+  internal: true
+- platform: homeassistant
+  id: state_hall
+  entity_id: light.hallway_light
+  internal: true
+- platform: homeassistant
+  id: state_bath
+  entity_id: light.bathroom_light
+  internal: true
+- platform: homeassistant
+  id: state_laundry
+  entity_id: light.laundry_room_light
+  internal: true
+- platform: homeassistant
+  id: state_balcony
+  entity_id: switch.balcony_switch_l1
+  internal: true
+- platform: homeassistant
+  id: ha_location
+  entity_id: sensor.current_location
+  internal: true
+- platform: homeassistant
+  id: ha_room
+  entity_id: input_select.current_room
+  internal: true
+- platform: homeassistant
+  id: ha_motion_living_room
+  entity_id: binary_sensor.living_room_motion_occupancy
+  internal: true
+- platform: homeassistant
+  id: ha_motion_hallway
+  entity_id: binary_sensor.hallway_motion_occupancy
+  internal: true
+- platform: homeassistant
+  id: ha_motion_bathroom
+  entity_id: binary_sensor.bathroom_motion_occupancy
+  internal: true
+- platform: homeassistant
+  id: ha_motion_laundry_room
+  entity_id: binary_sensor.laundry_room_motion_occupancy
+  internal: true
+interval:
+- interval: 1s
+  then:
+  - lambda: !lambda |-
+      const bool online = id(ha_api).is_connected_with_state_subscription();
+      auto number = [&](lv_obj_t *label, float value, const char *format) {
+        if (!online || !std::isfinite(value)) lv_label_set_text(label, "--");
+        else lv_label_set_text_fmt(label, format, value);
+      };
+      number(id(power_value), id(ha_power).state, "%.0f W");
+      number(id(phase_a_value), id(ha_phase_a).state, "%.0f W");
+      number(id(phase_b_value), id(ha_phase_b).state, "%.0f W");
+      number(id(phase_c_value), id(ha_phase_c).state, "%.0f W");
+      number(id(import_value), id(ha_import).state, "%.2f kWh");
+      number(id(export_value), id(ha_export).state, "%.2f kWh");
+      number(id(grace_value), id(ha_grace).state, "Grace: %.0f s");
+      number(id(lux_value), id(ha_lux).state, "Lux now: %.0f lx");
+      number(id(threshold_value), id(ha_threshold).state, "Threshold: %.0f lx");
+      lv_label_set_text_fmt(id(location_value), "Location: %s", online ? id(ha_location).state.c_str() : "HA disconnected");
+      lv_label_set_text_fmt(id(room_value), "Room: %s", online ? id(ha_room).state.c_str() : "HA disconnected");
+      { const auto &s = id(ha_motion_living_room).state;
+        lv_label_set_text_fmt(id(motion_living_room_value), "Living room: %s", !online ? "--" : s == "on" ? "Motion" : s == "off" ? "Clear" : "--");
+        lv_obj_set_style_text_color(id(motion_living_room_value), lv_color_hex(online && s == "on" ? 0x58D8C5 : 0xA5B3C1), 0);
+      }
+      { const auto &s = id(ha_motion_hallway).state;
+        lv_label_set_text_fmt(id(motion_hallway_value), "Hallway: %s", !online ? "--" : s == "on" ? "Motion" : s == "off" ? "Clear" : "--");
+        lv_obj_set_style_text_color(id(motion_hallway_value), lv_color_hex(online && s == "on" ? 0x58D8C5 : 0xA5B3C1), 0);
+      }
+      { const auto &s = id(ha_motion_bathroom).state;
+        lv_label_set_text_fmt(id(motion_bathroom_value), "Bathroom: %s", !online ? "--" : s == "on" ? "Motion" : s == "off" ? "Clear" : "--");
+        lv_obj_set_style_text_color(id(motion_bathroom_value), lv_color_hex(online && s == "on" ? 0x58D8C5 : 0xA5B3C1), 0);
+      }
+      { const auto &s = id(ha_motion_laundry_room).state;
+        lv_label_set_text_fmt(id(motion_laundry_room_value), "Laundry: %s", !online ? "--" : s == "on" ? "Motion" : s == "off" ? "Clear" : "--");
+        lv_obj_set_style_text_color(id(motion_laundry_room_value), lv_color_hex(online && s == "on" ? 0x58D8C5 : 0xA5B3C1), 0);
+      }
+      { const auto &s = id(state_auto_button).state;
+        const bool valid = online && (s == "on" || s == "off");
+        if (valid) lv_obj_remove_state(id(auto_button), LV_STATE_DISABLED); else lv_obj_add_state(id(auto_button), LV_STATE_DISABLED);
+        lv_obj_set_style_bg_color(id(auto_button), lv_color_hex(s == "on" && valid ? 0xDBAE50 : 0x344252), 0);
+        lv_obj_set_style_text_color(id(auto_button), lv_color_hex(s == "on" && valid ? 0x101820 : 0xF1F5F9), 0);
+        lv_label_set_text(lv_obj_get_child(id(auto_button), 0), !valid ? "Automation: --" : s == "on" ? "Automation: ON" : "Automation: OFF");
+      }
+      { const auto &s = id(state_living).state;
+        const bool valid = online && (s == "on" || s == "off");
+        if (valid) lv_obj_remove_state(id(living), LV_STATE_DISABLED); else lv_obj_add_state(id(living), LV_STATE_DISABLED);
+        lv_obj_set_style_bg_color(id(living), lv_color_hex(s == "on" && valid ? 0xDBAE50 : 0x344252), 0);
+        lv_obj_set_style_text_color(id(living), lv_color_hex(s == "on" && valid ? 0x101820 : 0xF1F5F9), 0);
+      }
+      { const auto &s = id(state_bed).state;
+        const bool valid = online && (s == "on" || s == "off");
+        if (valid) lv_obj_remove_state(id(bed), LV_STATE_DISABLED); else lv_obj_add_state(id(bed), LV_STATE_DISABLED);
+        lv_obj_set_style_bg_color(id(bed), lv_color_hex(s == "on" && valid ? 0xDBAE50 : 0x344252), 0);
+        lv_obj_set_style_text_color(id(bed), lv_color_hex(s == "on" && valid ? 0x101820 : 0xF1F5F9), 0);
+      }
+      { const auto &s = id(state_kitchen).state;
+        const bool valid = online && (s == "on" || s == "off");
+        if (valid) lv_obj_remove_state(id(kitchen), LV_STATE_DISABLED); else lv_obj_add_state(id(kitchen), LV_STATE_DISABLED);
+        lv_obj_set_style_bg_color(id(kitchen), lv_color_hex(s == "on" && valid ? 0xDBAE50 : 0x344252), 0);
+        lv_obj_set_style_text_color(id(kitchen), lv_color_hex(s == "on" && valid ? 0x101820 : 0xF1F5F9), 0);
+      }
+      { const auto &s = id(state_strip).state;
+        const bool valid = online && (s == "on" || s == "off");
+        if (valid) lv_obj_remove_state(id(strip), LV_STATE_DISABLED); else lv_obj_add_state(id(strip), LV_STATE_DISABLED);
+        lv_obj_set_style_bg_color(id(strip), lv_color_hex(s == "on" && valid ? 0xDBAE50 : 0x344252), 0);
+        lv_obj_set_style_text_color(id(strip), lv_color_hex(s == "on" && valid ? 0x101820 : 0xF1F5F9), 0);
+      }
+      { const auto &s = id(state_hall).state;
+        const bool valid = online && (s == "on" || s == "off");
+        if (valid) lv_obj_remove_state(id(hall), LV_STATE_DISABLED); else lv_obj_add_state(id(hall), LV_STATE_DISABLED);
+        lv_obj_set_style_bg_color(id(hall), lv_color_hex(s == "on" && valid ? 0xDBAE50 : 0x344252), 0);
+        lv_obj_set_style_text_color(id(hall), lv_color_hex(s == "on" && valid ? 0x101820 : 0xF1F5F9), 0);
+      }
+      { const auto &s = id(state_bath).state;
+        const bool valid = online && (s == "on" || s == "off");
+        if (valid) lv_obj_remove_state(id(bath), LV_STATE_DISABLED); else lv_obj_add_state(id(bath), LV_STATE_DISABLED);
+        lv_obj_set_style_bg_color(id(bath), lv_color_hex(s == "on" && valid ? 0xDBAE50 : 0x344252), 0);
+        lv_obj_set_style_text_color(id(bath), lv_color_hex(s == "on" && valid ? 0x101820 : 0xF1F5F9), 0);
+      }
+      { const auto &s = id(state_laundry).state;
+        const bool valid = online && (s == "on" || s == "off");
+        if (valid) lv_obj_remove_state(id(laundry), LV_STATE_DISABLED); else lv_obj_add_state(id(laundry), LV_STATE_DISABLED);
+        lv_obj_set_style_bg_color(id(laundry), lv_color_hex(s == "on" && valid ? 0xDBAE50 : 0x344252), 0);
+        lv_obj_set_style_text_color(id(laundry), lv_color_hex(s == "on" && valid ? 0x101820 : 0xF1F5F9), 0);
+      }
+      { const auto &s = id(state_balcony).state;
+        const bool valid = online && (s == "on" || s == "off");
+        if (valid) lv_obj_remove_state(id(balcony), LV_STATE_DISABLED); else lv_obj_add_state(id(balcony), LV_STATE_DISABLED);
+        lv_obj_set_style_bg_color(id(balcony), lv_color_hex(s == "on" && valid ? 0xDBAE50 : 0x344252), 0);
+        lv_obj_set_style_text_color(id(balcony), lv_color_hex(s == "on" && valid ? 0x101820 : 0xF1F5F9), 0);
+      }
