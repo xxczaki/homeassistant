@@ -1,0 +1,20 @@
+# Waveshare SKU 25948. Keep credentials in the untracked secrets.yaml.
+esphome:
+  name: waveshare-panel
+  friendly_name: Waveshare Panel
+  min_version: 2026.8.2
+packages:
+  panel: !include 'waveshare/panel.yaml'
+api:
+  id: ha_api
+  encryption:
+    key: !secret 'waveshare_api_encryption_key'
+ota:
+- platform: esphome
+wifi:
+  ssid: !secret 'wifi_ssid'
+  password: !secret 'wifi_password'
+  ap:
+    ssid: Waveshare Panel Fallback Hotspot
+    password: !secret 'waveshare_fallback_password'
+captive_portal: {}
