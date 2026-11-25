@@ -28,7 +28,7 @@ jobs:
           cache-dependency-glob: tests/uv.lock
 
       - name: Pin Python from mise.toml
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.14.8"
 
